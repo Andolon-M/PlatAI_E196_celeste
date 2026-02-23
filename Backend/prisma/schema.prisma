@@ -1,0 +1,101 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "binary"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model users {
+  id                    BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
+  email                 String                 @db.VarChar(255)
+  email_verified_at     DateTime?              @db.Timestamp(0)
+  password              String?                @db.VarChar(255)
+  google_id             String?                @db.VarChar(255)
+  image                 String?                @db.VarChar(255)
+  created_at            DateTime?              @db.Timestamp(0)
+  updated_at            DateTime?              @db.Timestamp(0)
+  deleted_at            DateTime?              @db.Timestamp(0)
+  role_id               BigInt?                @db.UnsignedBigInt
+  password_reset_tokens password_reset_tokens?
+  role                  roles?                 @relation(fields: [role_id], references: [id])
+  user_profiles         user_profiles?
+  user_oauth_tokens     user_oauth_tokens[]
+
+  @@index([role_id], map: "users_role_id_fkey")
+  @@index([email])
+}
+
+/// Datos extendidos del usuario (perfil): nombre, apellido, teléfono, etc. 1:1 con users.
+model user_profiles {
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id    BigInt    @unique @db.UnsignedBigInt
+  name       String?   @db.VarChar(255)
+  last_name  String?   @db.VarChar(255)
+  phone      String?   @db.VarChar(50)
+  created_at DateTime? @db.Timestamp(0)
+  updated_at DateTime? @db.Timestamp(0)
+  deleted_at DateTime? @db.Timestamp(0)
+  user       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+/// Tokens OAuth por proveedor (Google, etc.). Un usuario solo puede tener una cuenta por proveedor (ej. una Google).
+model user_oauth_tokens {
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id       BigInt    @db.UnsignedBigInt
+  provider      String    @db.VarChar(50)
+  access_token  String    @db.Text
+  refresh_token String?   @db.Text
+  expires_at    DateTime? @db.Timestamp(0)
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
+  user          users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, provider], map: "user_oauth_tokens_user_id_provider_unique")
+  @@index([user_id])
+  @@index([provider])
+}
+
+model password_reset_tokens {
+  token      String    @unique @db.VarChar(255)
+  created_at DateTime? @db.Timestamp(0)
+  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id    BigInt    @unique @db.UnsignedBigInt
+  user       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model permissions {
+  id                   BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
+  created_at            DateTime?              @db.Timestamp(0)
+  updated_at            DateTime?              @db.Timestamp(0)
+  deleted_at            DateTime?              @db.Timestamp(0)
+  action                String                 @db.VarChar(255)
+  resource              String                 @db.VarChar(255)
+  type                  Int                    @default(0)
+  role_has_permissions  role_has_permissions[]
+
+  @@unique([resource, action, type], map: "permissions_resource_action_unique")
+}
+
+model role_has_permissions {
+  permission_id BigInt      @db.UnsignedBigInt
+  role_id       BigInt      @db.UnsignedBigInt
+  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "role_has_permissions_permission_id_foreign")
+  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "role_has_permissions_role_id_foreign")
+
+  @@id([permission_id, role_id])
+  @@index([role_id], map: "role_has_permissions_role_id_foreign")
+}
+
+model roles {
+  id                   BigInt                  @id @default(autoincrement()) @db.UnsignedBigInt
+  name                 String                  @unique(map: "roles_name_type_unique") @db.VarChar(255)
+  created_at           DateTime?               @db.Timestamp(0)
+  updated_at           DateTime?               @db.Timestamp(0)
+  deleted_at           DateTime?               @db.Timestamp(0)
+  role_has_permissions role_has_permissions[]
+  users                users[]
+}

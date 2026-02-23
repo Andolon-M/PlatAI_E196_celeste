@@ -1,0 +1,9 @@
+package-lock.json
+node_modules
+.env
+/cursor
+/src/generated/prisma
+/dist
+.env.production
+/.cursor
+/exploradores-api

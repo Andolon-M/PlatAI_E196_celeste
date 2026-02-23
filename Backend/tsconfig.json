@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": ["*"],
+      "*": ["*"]
+    },
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": true,
+    "moduleResolution": "node",
+    "declaration": true,
+    "outDir": "dist",
+    "target": "es2018",
+    "module": "commonjs",
+    "typeRoots": ["./node_modules/@types", "./src/types"],
+    "skipLibCheck": true
+  },
+  "include": ["src/**/*", "prisma/**/*", "seeders/seed-rollback.ts", "seeders/seed.ts"],
+  "exclude": ["node_modules", "dist"]
+}
