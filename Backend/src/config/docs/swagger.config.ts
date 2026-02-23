@@ -69,11 +69,11 @@ const options: swaggerJsdoc.Options = {
     definition: {
         openapi: '3.0.0',
         info: {
-            title: 'API SIGA IVEAD',
+            title: 'API SIGA myApp',
             version: '1.0.0',
-            description: 'Documentación de la API de SIGA IVEAD',
+            description: 'Documentación de la API de SIGA myApp',
             contact: {
-                name: 'IVEAD Team',
+                name: 'myApp Team',
                 email: 'support@hunters-campus.com'
             },
             license: {

@@ -118,7 +118,7 @@ if (!isProduction) {
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
     explorer: true,
     customCss: '.swagger-ui .topbar',
-    customSiteTitle: "API SIGA IVEAD",
+    customSiteTitle: "API SIGA myApp",
     swaggerOptions: {
       persistAuthorization: true,
       displayRequestDuration: true,

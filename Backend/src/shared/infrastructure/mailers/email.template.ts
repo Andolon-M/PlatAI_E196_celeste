@@ -1,7 +1,7 @@
 import type { EmailTheme } from './email.types';
 
-const LOGO_LIGHT = 'https://miApp.com/images/logo-ive-color.png';
-const LOGO_DARK = 'https://miApp.com/images/logo-ive-white.png';
+const LOGO_LIGHT = 'https://finanzas-app.com/logo.png';
+const LOGO_DARK = 'https://finanzas-app.com/logo.png';
 const HERO_BG = 'https://miApp.com/images/hero-background.png';
 
 function escapeHtml(input: string): string {
@@ -368,9 +368,9 @@ export function renderBaseEmailHtml(params: {
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
                       <tr>
                         <td align="center">
-                          <img class="hero-logo" src="${LOGO_DARK}" alt="Iglesia Vida y Esperanza" />
-                          <div class="brandNameHero">Iglesia Vida y Esperanza</div>
-                          <div class="brandTaglineHero">Asambleas de Dios</div>
+                          <img class="hero-logo" src="${LOGO_DARK}" alt="Finanzas App" />
+                          <div class="brandNameHero">Finanzas App</div>
+                          <div class="brandTaglineHero">Plantilla de gestión financiera</div>
                         </td>
                       </tr>
                     </table>
@@ -385,16 +385,16 @@ export function renderBaseEmailHtml(params: {
                 </div>
 
                 <div class="footer">
-                  <p class="footer-text"><b>Iglesia Vida y Esperanza</b> — Hacemos Discípulos para Jesús que sirvan a Dios en la familia, Iglesia y comunidad.</p>
+                  <p class="footer-text"><b>Finanzas App</b> — Gestiona ingresos, gastos y metas financieras desde una sola plataforma.</p>
 
                   <div class="footer-links">
-                    <a class="footer-link" href="https://miApp.com">miApp.com</a>
-                    <a class="footer-link" href="https://youtube.com/@IglesiaVidayEsperanzaAD">YouTube</a>
-                    <a class="footer-link" href="https://facebook.com/Vidayesperanza.AD">Facebook</a>
-                    <a class="footer-link" href="https://instagram.com/ive.ad">Instagram</a>
+                    <a class="footer-link" href="https://finanzas-app.com">finanzas-app.com</a>
+                    <a class="footer-link" href="https://youtube.com">YouTube</a>
+                    <a class="footer-link" href="https://facebook.com">Facebook</a>
+                    <a class="footer-link" href="https://instagram.com">Instagram</a>
                   </div>
 
-                  <p class="footer-copyright">© ${year} IVE. Este es un correo automático, por favor no respondas a este mensaje.</p>
+                  <p class="footer-copyright">© ${year} Finanzas App. Este es un correo automático, por favor no respondas a este mensaje.</p>
                 </div>
               </td>
             </tr>

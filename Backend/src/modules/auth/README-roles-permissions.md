@@ -1,6 +1,6 @@
 # Sistema de Roles y Permisos
 
-Este módulo implementa un sistema completo de gestión de roles y permisos para la aplicación SIGA-IVEAD.
+Este módulo implementa un sistema completo de gestión de roles y permisos para la aplicación myApp.
 
 ## Arquitectura
 

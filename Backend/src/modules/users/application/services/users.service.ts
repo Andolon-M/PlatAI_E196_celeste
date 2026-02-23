@@ -49,7 +49,7 @@ export class UsersService {
       const { password, ...userWithoutPassword } = user as any;
       await sendTemplatedEmail({
         to: user.email,
-        subject: 'Bienvenido a SIGA-IVEAD',
+        subject: 'Bienvenido a myApp',
         contentText: [
           'Tu cuenta ha sido creada exitosamente.',
           '',

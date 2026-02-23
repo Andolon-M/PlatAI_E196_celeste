@@ -59,7 +59,7 @@ export class AuthService {
       const recipientName = user.user_profiles?.name ?? user.email.split('@')[0];
       await sendTemplatedEmail({
         to: user.email,
-        subject: 'Inicio de Session - IVE',
+        subject: 'Inicio de sesión - Finanzas App',
         recipientName,
         contentText: [
           'hemos detectado un inicio de sesión en tu cuenta.',
@@ -133,7 +133,7 @@ export class AuthService {
           const loginLink = `${url}/login`;
           await sendTemplatedEmail({
             to: createdUser.email,
-            subject: 'Bienvenido a IVE',
+            subject: 'Bienvenido a Finanzas App',
             recipientName: userName || createdUser.email.split('@')[0],
             contentText: [
               'Tu cuenta ha sido creada exitosamente.',

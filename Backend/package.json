@@ -1,5 +1,5 @@
 {
-  "name": "siga-ivead-node",
+  "name": "myApp-node",
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
@@ -17,7 +17,7 @@
   "keywords": [],
   "author": "Andolon-M",
   "license": "ISC",
-  "description": "API de SIGA-IVEAD",
+  "description": "API de myApp",
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.3.0",
     "@prisma/client": "^7.3.0",

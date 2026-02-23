@@ -39,7 +39,7 @@ export class PasswordResetService {
 
     await sendTemplatedEmail({
       to: email,
-      subject: 'Restablecer contraseña - IVE',
+      subject: 'Restablecer contraseña - Finanzas App',
       recipientName: email.split('@')[0],
       contentText: [
         'Hemos recibido una solicitud para restablecer tu contraseña.',

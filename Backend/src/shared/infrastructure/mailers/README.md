@@ -1,4 +1,4 @@
-# Mailer compartido (plantilla corporativa IVE)
+# Mailer compartido (plantilla corporativa)
 
 Este módulo centraliza **la plantilla HTML** y **la lógica de envío** de correos.  
 Los módulos solo deben llamar a `sendTemplatedEmail(...)` enviando `subject` y `contentText` (y opcionalmente `recipientName`, `theme`, `action`).
@@ -20,7 +20,7 @@ Configura estas variables (por ejemplo en tu `.env`):
 - `EMAIL_SMTP_SECURE` (`true` para 465, `false` para 587)
 - `EMAIL_SMTP_USER`
 - `EMAIL_SMTP_PASS`
-- `EMAIL_FROM_NAME` (opcional, default: `IVE Admin`)
+- `EMAIL_FROM_NAME` (opcional, default: `Finanzas App Admin`)
 - `EMAIL_FROM_ADDRESS` (opcional, default: `EMAIL_SMTP_USER`)
 
 ## Envío básico (solo asunto + texto)
@@ -28,7 +28,7 @@ Configura estas variables (por ejemplo en tu `.env`):
 ```ts
 await sendTemplatedEmail({
   to: 'usuario@dominio.com',
-  subject: 'Bienvenido a IVE',
+  subject: 'Bienvenido a Finanzas App',
   recipientName: 'Andolon',
   contentText: [
     'Tu cuenta ha sido creada exitosamente.',
@@ -80,7 +80,7 @@ Ejemplo:
 ```ts
 await sendTemplatedEmail({
   to: 'usuario@dominio.com',
-  subject: 'Inicio de sesión - IVE',
+  subject: 'Inicio de sesión - Finanzas App',
   recipientName: 'Andolon',
   contentText: [
     'Hemos detectado un inicio de sesión en tu cuenta.',
