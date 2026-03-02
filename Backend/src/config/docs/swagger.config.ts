@@ -84,7 +84,7 @@ const options: swaggerJsdoc.Options = {
         // Base sin /api: los paths en la spec son /api/... así la URL final es correcta (no api/api).
         servers: [
             {
-                url: `http://${process.env.API_BASE_URL_LOCAL ?? 'localhost'}:${process.env.EXPRESS_PORT ?? '3000'}`,
+                url: `http://${process.env.API_BASE_URL_LOCAL ?? 'localhost'}:${process.env.EXPRESS_PORT ?? '3000'}/api`,
                 description: 'Servidor local (default)'
             },
             {
