@@ -34,7 +34,7 @@ Este proyecto es desarrollado por un equipo multidisciplinario enfocado en soluc
 | **Líder del Proyecto** | **Gabriel Tamallo** |
 | Desarrollador | Sebastian Jaimes |
 | Desarrollador | Anderson Mendez |
-
+| Desarrollador | Omar Ortiz |
 ---
 
 ## 📝 Instalación y Uso (Próximamente)
