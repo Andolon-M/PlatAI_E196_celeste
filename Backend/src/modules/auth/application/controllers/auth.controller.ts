@@ -2,10 +2,11 @@ import { Request, Response } from "express";
 import { AuthService } from "../services/auth.service";
 import { PasswordResetService } from "../services/password-reset.service";
 import { AuthRepository } from "../../infrastructure/repositories/auth.repository";
+import { SessionsRepository } from "../../../../shared/infrastructure/repositories/sessions.repository";
 import type { PassportUser } from "../../../../shared/infrastructure/middlewares/passport.middleware";
 
 /**
- * Controlador para manejar las operaciones de autenticación
+ * Controlador para manejar las operaciones de autenticación y sesiones
  */
 export class AuthController {
   /**
@@ -18,6 +19,18 @@ export class AuthController {
     try {
       const { email, password } = req.body;
       const authResponse = await AuthService.login(email, password);
+      
+      // Capturar metadatos del cliente
+      const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+      const device = req.headers['user-agent'] || 'unknown';
+      
+      // Registrar la sesión en la base de datos
+      await SessionsRepository.createSession(
+        BigInt(authResponse.user.id),
+        authResponse.token,
+        ip,
+        device
+      );
       
       return res.status(200).json({
         status: 200,
@@ -68,6 +81,18 @@ export class AuthController {
       };
 
       const authResponse = await AuthService.register(registerData);
+
+      // Capturar metadatos del cliente
+      const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+      const device = req.headers['user-agent'] || 'unknown';
+      
+      // Registrar la sesión de autologueo en la base de datos
+      await SessionsRepository.createSession(
+        BigInt(authResponse.user.id),
+        authResponse.token,
+        ip,
+        device
+      );
 
       // Preparar respuesta de éxito
       const responseData = { 
@@ -124,6 +149,18 @@ export class AuthController {
         });
       }
 
+      // Capturar metadatos del cliente
+      const ip = req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+      const device = req.headers['user-agent'] || 'unknown';
+      
+      // Registrar la sesión del usuario Google en la base de datos
+      await SessionsRepository.createSession(
+        BigInt(authResponse.user.id),
+        authResponse.token,
+        ip,
+        device
+      );
+
       // Determinar el entorno y construir la URL de redirección
       const isProduction = process.env.EXPRESS_PRODUCTION?.toLowerCase() === 'true';
       const frontendUrl = isProduction ? `https://${process.env.BASE_URL}` : `http://${process.env.BASE_URL_LOCAL}:${Number(process.env.EXPRESS_PORT) + 1}` || 'http://localhost:3000';
@@ -141,15 +178,20 @@ export class AuthController {
   }
 
   /**
-   * Maneja la solicitud de cierre de sesión [OBSOLETA]
+   * Maneja la solicitud de cierre de sesión revocando el token
    * @param {Request} req - Objeto de solicitud de Express
    * @param {Response} res - Objeto de respuesta de Express
    * @returns {Promise<Response>} Respuesta con mensaje de éxito
    */
   static async logout(req: Request, res: Response) {
     try {
-      // Logica para manejo de cierre de sesión
-      // Nota: Con tokens JWT, el cierre de sesión generalmente se maneja del lado del cliente
+      // Extraer token del header Authorization
+      const token = req.headers.authorization?.split(' ')[1];
+      
+      if (token) {
+        // Inactivar sesión en la base de datos (revocación del JWT)
+        await SessionsRepository.revokeSession(token);
+      }
 
       return res.status(200).json({
         status: 200,
@@ -236,4 +278,3 @@ export class AuthController {
     }
   }
 }
-

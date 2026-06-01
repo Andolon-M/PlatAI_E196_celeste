@@ -4,7 +4,6 @@ import passport from "../../../shared/infrastructure/middlewares/passport.middle
 import { isAuthenticated } from "../../../shared/infrastructure/middlewares/auth.middleware";
 import { AuthValidator } from "../application/validators/auth.validator";
 import { validateRequest } from "../../../shared/application/validators/validation.middleware";
-import rolesPermissionsRoutes from "./roles-permissions.routes";
 import { PasswordResetValidator } from "../application/validators/password-reset.validatos";
 const router = Router();
 
@@ -68,8 +67,5 @@ router.post(
   validateRequest,
   (req: Request, res: Response) => AuthController.resetPassword(req, res)
 );
-
-// Rutas de roles y permisos (requieren autenticación)
-router.use('/', isAuthenticated, rolesPermissionsRoutes);
 
 export default router;

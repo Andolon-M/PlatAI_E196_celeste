@@ -1,5 +1,4 @@
-// Importar la documentación de roles y permisos
-import './roles-permissions.routers.swagger';
+// Documentación de endpoints de autenticación
 
 /**
  * @swagger

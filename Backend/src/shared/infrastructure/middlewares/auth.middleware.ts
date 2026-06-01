@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { UserCapabilitiesRepository, UserCapability, UserSubscription } from '../repositories/user-capabilities.repository';
+import { SessionsRepository } from '../repositories/sessions.repository';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_change_this';
 const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '24h';
@@ -51,6 +52,18 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
     }
 
     const decoded = jwt.verify(token, JWT_SECRET) as Express.User;
+    
+    // VALIDACIÓN CRÍTICA: Verificar si la sesión está activa y vigente en la base de datos
+    const isSessionActive = await SessionsRepository.checkSessionActive(BigInt(decoded.userId), token);
+    if (!isSessionActive) {
+      return res.status(401).json({
+        status: 401,
+        message: 'La sesión ha expirado o ha sido revocada, por favor inicia sesión nuevamente',
+        data: {
+          error: 'Sesión inactiva o revocada en la base de datos'
+        }
+      });
+    }
     
     // Consultar el usuario completo con suscripción y capacidades
     const userWithCapabilities = await UserCapabilitiesRepository.getUserWithCapabilities(BigInt(decoded.userId));
@@ -194,7 +207,7 @@ export const hasRole = (roleName: string) => {
         });
       }
 
-      // Verificar si el usuario tiene la suscripción especificada
+      // Verificar si el usuario tiene la suscripción específica
       const hasSubscription = req.user.subscription && 
         req.user.subscription.name === roleName;
 
