@@ -1,7 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../src/config/database/db';
 import * as bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+declare const process: any;
 
 async function main() {
   console.log('🌱 Iniciando sembrado de la base de datos...');
@@ -77,7 +77,7 @@ async function main() {
   for (const cap of capabilitiesList) {
     const createdCap = await prisma.capabilities.upsert({
       where: {
-        capabilities_resource_action_unique: {
+        resource_action_type: {
           resource: cap.resource,
           action: cap.action,
           type: cap.type

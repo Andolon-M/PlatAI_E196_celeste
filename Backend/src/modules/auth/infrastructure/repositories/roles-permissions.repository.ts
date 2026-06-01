@@ -1,25 +1,22 @@
 import { prisma } from '../../../../config/database/db';
-import { Prisma } from '@prisma/client';
 
 /**
- * Repositorio para gestionar roles y permisos
+ * Repositorio para gestionar roles y permisos (Mapeado a Suscripciones y Capacidades)
  */
 export class RolesPermissionsRepository {
   
-  // ========== ROLES ==========
+  // ========== ROLES (Suscripciones) ==========
   
   /**
    * Crea un nuevo rol
    * @param name - Nombre del rol
-   * @param guardName - Nombre del guard (por defecto 'web')
    * @returns El rol creado
    */
   static async createRole(name: string) {
-    return await prisma.roles.create({
+    return await prisma.subscriptions.create({
       data: {
         name,
-        created_at: new Date(),
-        updated_at: new Date()
+        price: 0.00
       }
     });
   }
@@ -31,26 +28,26 @@ export class RolesPermissionsRepository {
   static async getAllRolesWithPermissions() {
     const roles = await prisma.$queryRaw`
       SELECT 
-        r.id,
-        r.name,
-        r.created_at,
-        r.updated_at,
+        s.id,
+        s.name,
+        CAST(s.price AS DOUBLE) as price,
+        s.created_at,
+        s.updated_at,
         GROUP_CONCAT(
           CONCAT(
-            '{"id":', p.id, 
-            ',"resource":"', p.resource, 
-            '","action":"', p.action,
-            '","type":', p.type, 
-            ',"created_at":"', p.created_at, 
-            '","updated_at":"', p.updated_at, '"}'
+            '{"id":', c.id, 
+            ',"resource":"', c.resource, 
+            '","action":"', c.action,
+            '","type":', c.type, 
+            ',"created_at":"', c.created_at, 
+            '","updated_at":"', c.updated_at, '"}'
           ) SEPARATOR ','
         ) as permissions_json
-      FROM roles r
-      LEFT JOIN role_has_permissions rhp ON r.id = rhp.role_id
-      LEFT JOIN permissions p ON rhp.permission_id = p.id AND p.deleted_at IS NULL
-      WHERE r.deleted_at IS NULL
-      GROUP BY r.id, r.name, r.created_at, r.updated_at
-      ORDER BY r.name
+      FROM subscriptions s
+      LEFT JOIN subscription_capabilities sc ON s.id = sc.subscription_id
+      LEFT JOIN capabilities c ON sc.capability_id = c.id
+      GROUP BY s.id, s.name, s.price, s.created_at, s.updated_at
+      ORDER BY s.name
     ` as any[];
 
     return roles.map(role => ({
@@ -69,24 +66,26 @@ export class RolesPermissionsRepository {
   static async getRoleByIdWithPermissions(roleId: bigint) {
     const result = await prisma.$queryRaw`
       SELECT 
-        r.id,
-        r.name,
-        r.created_at,
-        r.updated_at,
+        s.id,
+        s.name,
+        CAST(s.price AS DOUBLE) as price,
+        s.created_at,
+        s.updated_at,
         GROUP_CONCAT(
           CONCAT(
-            '{"id":', p.id, 
-            ',"name":"', p.name, 
-            '","guard_name":"', p.guard_name, 
-            '","created_at":"', p.created_at, 
-            '","updated_at":"', p.updated_at, '"}'
+            '{"id":', c.id, 
+            ',"resource":"', c.resource, 
+            '","action":"', c.action,
+            '","type":', c.type, 
+            ',"created_at":"', c.created_at, 
+            '","updated_at":"', c.updated_at, '"}'
           ) SEPARATOR ','
         ) as permissions_json
-      FROM roles r
-      LEFT JOIN role_has_permissions rhp ON r.id = rhp.role_id
-      LEFT JOIN permissions p ON rhp.permission_id = p.id
-      WHERE r.id = ${roleId} AND r.deleted_at IS NULL
-      GROUP BY r.id, r.name, r.created_at, r.updated_at
+      FROM subscriptions s
+      LEFT JOIN subscription_capabilities sc ON s.id = sc.subscription_id
+      LEFT JOIN capabilities c ON sc.capability_id = c.id
+      WHERE s.id = ${roleId}
+      GROUP BY s.id, s.name, s.price, s.created_at, s.updated_at
     ` as any[];
 
     if (result.length === 0) return null;
@@ -104,11 +103,10 @@ export class RolesPermissionsRepository {
    * Actualiza un rol
    * @param roleId - ID del rol
    * @param name - Nuevo nombre del rol
-   * @param guardName - Nuevo guard name
    * @returns Rol actualizado
    */
   static async updateRole(roleId: bigint, name: string) {
-    return await prisma.roles.update({
+    return await prisma.subscriptions.update({
       where: { id: roleId },
       data: {
         name,
@@ -118,16 +116,13 @@ export class RolesPermissionsRepository {
   }
 
   /**
-   * Elimina un rol (soft delete)
+   * Elimina un rol (físicamente, al no haber soft delete en subscriptions)
    * @param roleId - ID del rol
    * @returns Resultado de la eliminación                                                  
    */
   static async deleteRole(roleId: bigint) {
-    return await prisma.roles.update({
-      where: { id: roleId },
-      data: {
-        deleted_at: new Date()
-      }
+    return await prisma.subscriptions.delete({
+      where: { id: roleId }
     });
   }
 
@@ -137,25 +132,22 @@ export class RolesPermissionsRepository {
    * @returns true si existe, false si no
    */
   static async roleExists(roleId: bigint) {
-    const role = await prisma.roles.findFirst({
+    const role = await prisma.subscriptions.findFirst({
       where: {
-        id: roleId,
-        deleted_at: null
+        id: roleId
       }
     });
     return !!role;
   }
 
-  // ========== PERMISOS ==========
+  // ========== PERMISOS (Capacidades) ==========
 
   /**
    * Crea un nuevo permiso
-   * @param name - Nombre del permiso
-   * @param guardName - Nombre del guard (por defecto 'web')
    * @returns El permiso creado
    */
-    static async createPermission(resource: string, action: string, type: number = 0) {
-    return await prisma.permissions.create({
+  static async createPermission(resource: string, action: string, type: number = 0) {
+    return await prisma.capabilities.create({
       data: {
         resource,
         action,
@@ -179,8 +171,7 @@ export class RolesPermissionsRepository {
         type,
         created_at,
         updated_at
-      FROM permissions
-      WHERE deleted_at IS NULL
+      FROM capabilities
       ORDER BY resource, action
     ` as any[];
   }
@@ -191,23 +182,19 @@ export class RolesPermissionsRepository {
    * @returns Permiso encontrado
    */
   static async getPermissionById(permissionId: bigint) {
-    return await prisma.permissions.findFirst({
+    return await prisma.capabilities.findFirst({
       where: {
-        id: permissionId,
-        deleted_at: null
+        id: permissionId
       }
     });
   }
 
   /**
    * Actualiza un permiso
-   * @param permissionId - ID del permiso
-   * @param name - Nuevo nombre del permiso
-   * @param guardName - Nuevo guard name
    * @returns Permiso actualizado
    */
   static async updatePermission(permissionId: bigint, resource: string, action: string, type: number = 0) {
-    return await prisma.permissions.update({
+    return await prisma.capabilities.update({
       where: { id: permissionId },
       data: {
         resource,
@@ -219,16 +206,13 @@ export class RolesPermissionsRepository {
   }
 
   /**
-   * Elimina un permiso (soft delete)
+   * Elimina un permiso (físicamente)
    * @param permissionId - ID del permiso
    * @returns Resultado de la eliminación
    */
   static async deletePermission(permissionId: bigint) {
-    return await prisma.permissions.update({
-      where: { id: permissionId },
-      data: {
-        deleted_at: new Date()
-      }
+    return await prisma.capabilities.delete({
+      where: { id: permissionId }
     });
   }
 
@@ -238,38 +222,37 @@ export class RolesPermissionsRepository {
    * @returns true si existe, false si no
    */
   static async permissionExists(permissionId: bigint) {
-    const permission = await prisma.permissions.findFirst({
+    const permission = await prisma.capabilities.findFirst({
       where: {
-        id: permissionId,
-        deleted_at: null
+        id: permissionId
       }
     });
     return !!permission;
   }
 
-  // ========== ASIGNACIÓN DE PERMISOS A ROLES ==========
+  // ========== ASIGNACIÓN DE CAPACIDADES A PLANES ==========
 
   /**
-   * Asigna permisos a un rol usando transacción
-   * @param roleId - ID del rol
-   * @param permissionIds - Array de IDs de permisos
+   * Asigna capacidades a un plan usando transacción
+   * @param roleId - ID del plan (suscripción)
+   * @param permissionIds - Array de IDs de capacidades
    * @returns Resultado de la asignación
    */
   static async assignPermissionsToRole(roleId: bigint, permissionIds: bigint[]) {
     return await prisma.$transaction(async (tx) => {
       // Primero eliminamos todas las asignaciones existentes
-      await tx.role_has_permissions.deleteMany({
-        where: { role_id: roleId }
+      await tx.subscription_capabilities.deleteMany({
+        where: { subscription_id: roleId }
       });
 
       // Luego creamos las nuevas asignaciones
       if (permissionIds.length > 0) {
         const assignments = permissionIds.map(permissionId => ({
-          role_id: roleId,
-          permission_id: permissionId
+          subscription_id: roleId,
+          capability_id: permissionId
         }));
 
-        await tx.role_has_permissions.createMany({
+        await tx.subscription_capabilities.createMany({
           data: assignments
         });
       }
@@ -279,53 +262,53 @@ export class RolesPermissionsRepository {
   }
 
   /**
-   * Obtiene los permisos de un rol específico usando SQL nativo
-   * @param roleId - ID del rol
-   * @returns Lista de permisos del rol
+   * Obtiene las capacidades de un plan específico usando SQL nativo
+   * @param roleId - ID del plan (suscripción)
+   * @returns Lista de capacidades del plan
    */
   static async getRolePermissions(roleId: bigint) {
     return await prisma.$queryRaw`
       SELECT 
-        p.id,
-        p.resource,
-        p.action,
-        p.type,
-        p.created_at,
-        p.updated_at
-      FROM permissions p
-      INNER JOIN role_has_permissions rhp ON p.id = rhp.permission_id
-      WHERE rhp.role_id = ${roleId} AND p.deleted_at IS NULL
-      ORDER BY p.resource, p.action
+        c.id,
+        c.resource,
+        c.action,
+        c.type,
+        c.created_at,
+        c.updated_at
+      FROM capabilities c
+      INNER JOIN subscription_capabilities sc ON c.id = sc.capability_id
+      WHERE sc.subscription_id = ${roleId}
+      ORDER BY c.resource, c.action
     ` as any[];
   }
 
   /**
-   * Verifica si un rol tiene un permiso específico
-   * @param roleId - ID del rol
-   * @param permissionId - ID del permiso
+   * Verifica si un plan tiene una capacidad específica
+   * @param roleId - ID del plan
+   * @param permissionId - ID de la capacidad
    * @returns true si tiene el permiso, false si no
    */
   static async roleHasPermission(roleId: bigint, permissionId: bigint) {
-    const assignment = await prisma.role_has_permissions.findFirst({
+    const assignment = await prisma.subscription_capabilities.findFirst({
       where: {
-        role_id: roleId,
-        permission_id: permissionId
+        subscription_id: roleId,
+        capability_id: permissionId
       }
     });
     return !!assignment;
   }
 
   /**
-   * Elimina un permiso específico de un rol
-   * @param roleId - ID del rol
-   * @param permissionId - ID del permiso
+   * Elimina una capacidad específica de un plan
+   * @param roleId - ID del plan
+   * @param permissionId - ID de la capacidad
    * @returns Resultado de la eliminación
    */
   static async removePermissionFromRole(roleId: bigint, permissionId: bigint) {
-    return await prisma.role_has_permissions.deleteMany({
+    return await prisma.subscription_capabilities.deleteMany({
       where: {
-        role_id: roleId,
-        permission_id: permissionId
+        subscription_id: roleId,
+        capability_id: permissionId
       }
     });
   }
@@ -333,46 +316,41 @@ export class RolesPermissionsRepository {
   // ========== MÉTODOS DE VALIDACIÓN ==========
 
   /**
-   * Verifica si un nombre de rol ya existe
-   * @param name - Nombre del rol
-   * @param guardName - Guard name
+   * Verifica si un nombre de plan ya existe
+   * @param name - Nombre del plan
    * @param excludeId - ID a excluir de la búsqueda (para actualizaciones)
    * @returns true si existe, false si no
    */
   static async roleNameExists(name: string, excludeId?: bigint) {
     const whereClause: any = {
-      name,
-      deleted_at: null
+      name
     };
 
     if (excludeId) {
       whereClause.id = { not: excludeId };
     }
 
-    const role = await prisma.roles.findFirst({ where: whereClause });
+    const role = await prisma.subscriptions.findFirst({ where: whereClause });
     return !!role;
   }
 
   /**
-   * Verifica si un nombre de permiso ya existe
-   * @param name - Nombre del permiso
-   * @param guardName - Guard name
-   * @param excludeId - ID a excluir de la búsqueda (para actualizaciones)
+   * Verifica si un nombre de capacidad ya existe
+   * @param excludeId - ID a excluir de la búsqueda
    * @returns true si existe, false si no
    */
   static async permissionNameExists(resource: string, action: string, type: number = 0, excludeId?: bigint) {
     const whereClause: any = {
       resource,
       action,
-      type,
-      deleted_at: null
+      type
     };
 
     if (excludeId) {
       whereClause.id = { not: excludeId };
     }
 
-    const permission = await prisma.permissions.findFirst({ where: whereClause });
+    const permission = await prisma.capabilities.findFirst({ where: whereClause });
     return !!permission;
   }
 }

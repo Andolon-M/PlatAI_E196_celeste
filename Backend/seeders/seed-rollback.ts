@@ -1,6 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../src/config/database/db';
 
-const prisma = new PrismaClient();
+declare const process: any;
 
 async function main() {
   console.log('🧹 Iniciando rollback del sembrado de base de datos...');

@@ -31,14 +31,14 @@ export const generateToken = (user: User): string => {
     const payload = {
         userId: user.id?.toString(),
         email: user.email,
-        roleId: user.role_id?.toString()
+        roleId: user.subscription_id?.toString()
     };
 
     // Usar una clave secreta desde variables de entorno
     const secret = process.env.JWT_SECRET || 'default_secret_change_this';
     
-    // Generar el token sin expiración si es el rol IA (roleId = 0)
-    if (user.role_id === BigInt(0)) {
+    // Generar el token sin expiración si es la suscripción IA (subscription_id = 0)
+    if (user.subscription_id === BigInt(0)) {
         // Sin expiración para el rol IA
         return jwt.sign(payload, secret);
     }

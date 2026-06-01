@@ -5,7 +5,6 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 // ==========================================
@@ -68,6 +67,7 @@ model users {
 
   // Relaciones Financieras y Externas
   cuentas            cuentas[]
+  categorias         categorias[]
   movimientos        movimientos[]
   metas_ahorro       metas_ahorro[]
   aportes_meta       aportes_meta[]

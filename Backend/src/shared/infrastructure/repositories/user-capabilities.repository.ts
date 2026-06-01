@@ -149,8 +149,8 @@ export class UserCapabilitiesRepository {
     if (!result || result.length === 0) return false;
     
     // Corrección de Bug Crítico: result es un array plano de filas devuelto por Prisma
-    const count = BigInt((result[0] as any).count || 0n);
-    return count > 0n;
+    const count = BigInt((result[0] as any).count || 0);
+    return count > BigInt(0);
   }
 
   /**
@@ -173,8 +173,8 @@ export class UserCapabilitiesRepository {
     if (!result || result.length === 0) return false;
     
     // Corrección de Bug Crítico: result es un array plano de filas devuelto por Prisma
-    const count = BigInt((result[0] as any).count || 0n);
-    return count > 0n;
+    const count = BigInt((result[0] as any).count || 0);
+    return count > BigInt(0);
   }
 
   /**

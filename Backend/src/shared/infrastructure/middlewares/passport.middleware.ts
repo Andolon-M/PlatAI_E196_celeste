@@ -78,7 +78,7 @@ passport.use(new GoogleStrategy({
       return done(error as Error);
     }
   }
-}));
+));
 
 // Serialización del usuario para la sesión
 passport.serializeUser((user: any, done) => {
