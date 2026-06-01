@@ -5,44 +5,84 @@ generator client {
 
 datasource db {
   provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
-model users {
-  id                    BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
-  email                 String                 @db.VarChar(255)
-  email_verified_at     DateTime?              @db.Timestamp(0)
-  password              String?                @db.VarChar(255)
-  google_id             String?                @db.VarChar(255)
-  image                 String?                @db.VarChar(255)
-  created_at            DateTime?              @db.Timestamp(0)
-  updated_at            DateTime?              @db.Timestamp(0)
-  deleted_at            DateTime?              @db.Timestamp(0)
-  role_id               BigInt?                @db.UnsignedBigInt
-  password_reset_tokens password_reset_tokens?
-  role                  roles?                 @relation(fields: [role_id], references: [id])
-  user_profiles         user_profiles?
-  user_oauth_tokens     user_oauth_tokens[]
+// ==========================================
+// 1. SEGURIDAD Y ACCESO (Suscripciones y Capacidades)
+// ==========================================
 
-  @@index([role_id], map: "users_role_id_fkey")
+model subscriptions {
+  id                        BigInt                      @id @default(autoincrement()) @db.UnsignedBigInt
+  name                      String                      @unique @db.VarChar(255)
+  price                     Decimal                     @db.Decimal(10, 2) @default(0.00)
+  created_at                DateTime?                   @default(now()) @db.Timestamp(0)
+  updated_at                DateTime?                   @default(now()) @updatedAt @db.Timestamp(0)
+  users                     users[]
+  subscription_capabilities subscription_capabilities[]
+}
+
+model capabilities {
+  id                        BigInt                      @id @default(autoincrement()) @db.UnsignedBigInt
+  resource                  String                      @db.VarChar(255)
+  action                    String                      @db.VarChar(255)
+  type                      Int                         @default(0)
+  description               String?                     @db.VarChar(255)
+  created_at                DateTime?                   @default(now()) @db.Timestamp(0)
+  updated_at                DateTime?                   @default(now()) @updatedAt @db.Timestamp(0)
+  subscription_capabilities subscription_capabilities[]
+
+  @@unique([resource, action, type], map: "capabilities_resource_action_unique")
+}
+
+model subscription_capabilities {
+  subscription_id BigInt        @db.UnsignedBigInt
+  capability_id   BigInt        @db.UnsignedBigInt
+  subscription    subscriptions @relation(fields: [subscription_id], references: [id], onDelete: Cascade, onUpdate: Restrict)
+  capability      capabilities  @relation(fields: [capability_id], references: [id], onDelete: Cascade, onUpdate: Restrict)
+
+  @@id([subscription_id, capability_id])
+  @@index([subscription_id])
+}
+
+// ==========================================
+// 2. USUARIOS Y SESIONES
+// ==========================================
+
+model users {
+  id                 BigInt                @id @default(autoincrement()) @db.UnsignedBigInt
+  nombre             String                @db.VarChar(150)
+  email              String                @unique @db.VarChar(191)
+  password_hash      String?               @db.VarChar(255)
+  google_id          String?               @db.VarChar(255)
+  foto_perfil        String?               @db.VarChar(255)
+  moneda_preferida   String                @default("COP") @db.VarChar(10)
+  estado             Int                   @default(1) @db.TinyInt // 1 = activo, 0 = inactivo
+  email_verificado   Int                   @default(0) @db.TinyInt // 1 = verificado
+  token_recuperacion String?               @db.VarChar(255)
+  token_expiracion   DateTime?             @db.DateTime
+  fecha_creacion     DateTime?             @default(now()) @db.Timestamp(0)
+  fecha_modificacion DateTime?             @default(now()) @updatedAt @db.Timestamp(0)
+  subscription_id    BigInt?               @db.UnsignedBigInt
+  subscription       subscriptions?        @relation(fields: [subscription_id], references: [id], onDelete: SetNull)
+
+  // Relaciones Financieras y Externas
+  cuentas            cuentas[]
+  movimientos        movimientos[]
+  metas_ahorro       metas_ahorro[]
+  aportes_meta       aportes_meta[]
+  deudas_prestamos   deudas_prestamos[]
+  abonos_deuda       abonos_deuda[]
+  transferencias     transferencias[]
+  notificaciones     notificaciones[]
+  sesiones           sesiones[]
+  user_oauth_tokens  user_oauth_tokens[]
+  external_chat      user_external_chats?
+
+  @@index([subscription_id])
   @@index([email])
 }
 
-/// Datos extendidos del usuario (perfil): nombre, apellido, teléfono, etc. 1:1 con users.
-model user_profiles {
-  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  user_id    BigInt    @unique @db.UnsignedBigInt
-  name       String?   @db.VarChar(255)
-  last_name  String?   @db.VarChar(255)
-  phone      String?   @db.VarChar(50)
-  created_at DateTime? @db.Timestamp(0)
-  updated_at DateTime? @db.Timestamp(0)
-  deleted_at DateTime? @db.Timestamp(0)
-  user       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@index([user_id])
-}
-
-/// Tokens OAuth por proveedor (Google, etc.). Un usuario solo puede tener una cuenta por proveedor (ej. una Google).
 model user_oauth_tokens {
   id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
   user_id       BigInt    @db.UnsignedBigInt
@@ -50,52 +90,266 @@ model user_oauth_tokens {
   access_token  String    @db.Text
   refresh_token String?   @db.Text
   expires_at    DateTime? @db.Timestamp(0)
-  created_at    DateTime? @db.Timestamp(0)
-  updated_at    DateTime? @db.Timestamp(0)
-  user          users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  created_at    DateTime? @default(now()) @db.Timestamp(0)
+  updated_at    DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+  usuario       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
   @@unique([user_id, provider], map: "user_oauth_tokens_user_id_provider_unique")
   @@index([user_id])
   @@index([provider])
 }
 
-model password_reset_tokens {
-  token      String    @unique @db.VarChar(255)
-  created_at DateTime? @db.Timestamp(0)
-  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  user_id    BigInt    @unique @db.UnsignedBigInt
-  user       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+model sesiones {
+  id               BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  id_usuario       BigInt    @db.UnsignedBigInt
+  token            String    @db.VarChar(500)
+  dispositivo      String?   @db.VarChar(255)
+  ip               String?   @db.VarChar(45)
+  fecha_expiracion DateTime  @db.DateTime
+  activa           Int       @default(1) @db.TinyInt // 1 = activa, 0 = inactiva/revocada
+  fecha_creacion   DateTime? @default(now()) @db.Timestamp(0)
+  usuario          users     @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+
+  @@index([id_usuario])
 }
 
-model permissions {
-  id                   BigInt                 @id @default(autoincrement()) @db.UnsignedBigInt
-  created_at            DateTime?              @db.Timestamp(0)
-  updated_at            DateTime?              @db.Timestamp(0)
-  deleted_at            DateTime?              @db.Timestamp(0)
-  action                String                 @db.VarChar(255)
-  resource              String                 @db.VarChar(255)
-  type                  Int                    @default(0)
-  role_has_permissions  role_has_permissions[]
+// Relación opcional 1:0..1 para vincular usuarios locales con chats en base de datos externa de PostgreSQL
+model user_external_chats {
+  id                    BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  user_id               BigInt    @unique @db.UnsignedBigInt
+  external_chat_user_id String    @db.VarChar(255) // ID del usuario en la DB externa de PostgreSQL
+  telefono              String    @db.VarChar(50)  // Teléfono del usuario con el que se mapea el chat
+  created_at            DateTime? @default(now()) @db.Timestamp(0)
+  updated_at            DateTime? @default(now()) @updatedAt @db.Timestamp(0)
+  usuario               users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([resource, action, type], map: "permissions_resource_action_unique")
+  @@index([user_id])
+  @@index([telefono])
 }
 
-model role_has_permissions {
-  permission_id BigInt      @db.UnsignedBigInt
-  role_id       BigInt      @db.UnsignedBigInt
-  permissions   permissions @relation(fields: [permission_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "role_has_permissions_permission_id_foreign")
-  roles         roles       @relation(fields: [role_id], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "role_has_permissions_role_id_foreign")
+// ==========================================
+// 3. ENTIDADES FINANCIERAS
+// ==========================================
 
-  @@id([permission_id, role_id])
-  @@index([role_id], map: "role_has_permissions_role_id_foreign")
+enum TipoCuenta {
+  Efectivo
+  Digital
+  Banco
+  Otro
 }
 
-model roles {
-  id                   BigInt                  @id @default(autoincrement()) @db.UnsignedBigInt
-  name                 String                  @unique(map: "roles_name_type_unique") @db.VarChar(255)
-  created_at           DateTime?               @db.Timestamp(0)
-  updated_at           DateTime?               @db.Timestamp(0)
-  deleted_at           DateTime?               @db.Timestamp(0)
-  role_has_permissions role_has_permissions[]
-  users                users[]
+model cuentas {
+  id                 BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  id_usuario         BigInt           @db.UnsignedBigInt
+  nombre             String           @db.VarChar(100)
+  tipo               TipoCuenta
+  saldo              Decimal          @default(0.00) @db.Decimal(15, 2)
+  color              String?          @db.VarChar(20)
+  estado             Int              @default(1) @db.TinyInt // 1 = activa, 0 = archivada
+  fecha_creacion     DateTime?        @default(now()) @db.Timestamp(0)
+  fecha_modificacion DateTime?        @default(now()) @updatedAt @db.Timestamp(0)
+  usuario            users            @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+  movimientos        movimientos[]
+  tr_origen          transferencias[] @relation("CuentaOrigen")
+  tr_destino         transferencias[] @relation("CuentaDestino")
+
+  @@index([id_usuario])
+}
+
+enum TipoCategoria {
+  ingreso
+  gasto
+  ambos
+}
+
+model categorias {
+  id                 BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  id_usuario         BigInt?       @db.UnsignedBigInt // NULL si es del sistema
+  nombre             String        @db.VarChar(80)
+  tipo               TipoCategoria
+  icono              String?       @db.VarChar(50)
+  color              String?       @db.VarChar(20)
+  estado             Int           @default(1) @db.TinyInt // 1 = activa, 0 = inactiva
+  fecha_creacion     DateTime?     @default(now()) @db.Timestamp(0)
+  fecha_modificacion DateTime?     @default(now()) @updatedAt @db.Timestamp(0)
+  usuario            users?        @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+  movimientos        movimientos[]
+
+  @@index([id_usuario])
+}
+
+enum TipoMovimiento {
+  ingreso
+  gasto
+}
+
+enum MetodoPago {
+  Efectivo
+  Transferencia
+  Tarjeta
+  Otro
+}
+
+model movimientos {
+  id                 BigInt         @id @default(autoincrement()) @db.UnsignedBigInt
+  id_usuario         BigInt         @db.UnsignedBigInt
+  id_cuenta          BigInt         @db.UnsignedBigInt
+  id_categoria       BigInt         @db.UnsignedBigInt
+  tipo               TipoMovimiento
+  monto              Decimal        @db.Decimal(15, 2)
+  descripcion        String         @db.VarChar(255)
+  fecha              DateTime       @db.Date
+  metodo_pago        MetodoPago
+  nota               String?        @db.Text
+  origen_ia          Int            @default(0) @db.TinyInt // 1 = creado por IA
+  eliminado          Int            @default(0) @db.TinyInt // Soft delete
+  fecha_creacion     DateTime?      @default(now()) @db.Timestamp(0)
+  fecha_modificacion DateTime?      @default(now()) @updatedAt @db.Timestamp(0)
+  usuario            users          @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+  cuenta             cuentas        @relation(fields: [id_cuenta], references: [id], onDelete: Cascade)
+  categoria          categorias     @relation(fields: [id_categoria], references: [id], onDelete: Cascade)
+
+  @@index([id_usuario])
+  @@index([id_cuenta])
+  @@index([id_categoria])
+}
+
+// ==========================================
+// 4. METAS DE AHORRO Y DEUDAS
+// ==========================================
+
+enum PrioridadMeta {
+  alta
+  media
+  baja
+}
+
+enum EstadoMeta {
+  activa
+  pausada
+  completada
+  cancelada
+}
+
+model metas_ahorro {
+  id                 BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  id_usuario         BigInt        @db.UnsignedBigInt
+  nombre             String        @db.VarChar(150)
+  monto_objetivo     Decimal       @db.Decimal(15, 2)
+  monto_actual       Decimal       @default(0.00) @db.Decimal(15, 2)
+  fecha_limite       DateTime      @db.Date
+  prioridad          PrioridadMeta
+  estado             EstadoMeta
+  icono              String?       @db.VarChar(50)
+  color              String?       @db.VarChar(20)
+  fecha_creacion     DateTime?     @default(now()) @db.Timestamp(0)
+  fecha_modificacion DateTime?     @default(now()) @updatedAt @db.Timestamp(0)
+  usuario            users         @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+  aportes            aportes_meta[]
+
+  @@index([id_usuario])
+}
+
+model aportes_meta {
+  id             BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
+  id_meta        BigInt       @db.UnsignedBigInt
+  id_usuario     BigInt       @db.UnsignedBigInt
+  monto          Decimal      @db.Decimal(15, 2)
+  nota           String?      @db.VarChar(255)
+  fecha_aporte   DateTime     @db.Date
+  fecha_creacion DateTime?    @default(now()) @db.Timestamp(0)
+  meta           metas_ahorro @relation(fields: [id_meta], references: [id], onDelete: Cascade)
+  usuario        users        @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+
+  @@index([id_meta])
+  @@index([id_usuario])
+}
+
+enum TipoDeuda {
+  yo_debo
+  me_deben
+}
+
+enum EstadoDeuda {
+  pendiente
+  parcial
+  pagada
+  cancelada
+}
+
+model deudas_prestamos {
+  id                 BigInt        @id @default(autoincrement()) @db.UnsignedBigInt
+  id_usuario         BigInt        @db.UnsignedBigInt
+  tipo               TipoDeuda
+  persona_entidad    String        @db.VarChar(150)
+  monto_total        Decimal       @db.Decimal(15, 2)
+  monto_pendiente    Decimal       @db.Decimal(15, 2)
+  descripcion        String?       @db.Text
+  fecha_vencimiento  DateTime?     @db.Date
+  estado             EstadoDeuda
+  fecha_creacion     DateTime?     @default(now()) @db.Timestamp(0)
+  fecha_modificacion DateTime?     @default(now()) @updatedAt @db.Timestamp(0)
+  usuario            users         @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+  abonos             abonos_deuda[]
+
+  @@index([id_usuario])
+}
+
+model abonos_deuda {
+  id             BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  id_deuda       BigInt           @db.UnsignedBigInt
+  id_usuario     BigInt           @db.UnsignedBigInt
+  monto_abonado  Decimal          @db.Decimal(15, 2)
+  nota           String?          @db.VarChar(255)
+  fecha_abono    DateTime         @db.Date
+  fecha_creacion DateTime?        @default(now()) @db.Timestamp(0)
+  deuda          deudas_prestamos @relation(fields: [id_deuda], references: [id], onDelete: Cascade)
+  usuario        users            @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+
+  @@index([id_deuda])
+  @@index([id_usuario])
+}
+
+model transferencias {
+  id                 BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  id_usuario         BigInt    @db.UnsignedBigInt
+  id_cuenta_origen   BigInt    @db.UnsignedBigInt
+  id_cuenta_destino  BigInt    @db.UnsignedBigInt
+  monto              Decimal   @db.Decimal(15, 2)
+  nota               String?   @db.VarChar(255)
+  fecha_transferencia DateTime  @db.Date
+  fecha_creacion     DateTime? @default(now()) @db.Timestamp(0)
+  usuario            users     @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+  cuenta_origen      cuentas   @relation("CuentaOrigen", fields: [id_cuenta_origen], references: [id], onDelete: Cascade)
+  cuenta_destino     cuentas   @relation("CuentaDestino", fields: [id_cuenta_destino], references: [id], onDelete: Cascade)
+
+  @@index([id_usuario])
+  @@index([id_cuenta_origen])
+  @@index([id_cuenta_destino])
+}
+
+// ==========================================
+// 5. NOTIFICACIONES
+// ==========================================
+
+enum TipoNotificacion {
+  meta_vence
+  deuda_vencida
+  recomendacion
+  sistema
+}
+
+model notificaciones {
+  id               BigInt           @id @default(autoincrement()) @db.UnsignedBigInt
+  id_usuario       BigInt           @db.UnsignedBigInt
+  tipo             TipoNotificacion
+  titulo           String           @db.VarChar(150)
+  mensaje          String           @db.Text
+  leida            Int              @default(0) @db.TinyInt // 0 = no leída, 1 = leída
+  id_referencia    BigInt?          @db.UnsignedBigInt
+  tabla_referencia String?          @db.VarChar(50)
+  fecha_creacion   DateTime?        @default(now()) @db.Timestamp(0)
+  usuario          users            @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+
+  @@index([id_usuario])
 }

@@ -16,6 +16,7 @@ export class UsersService {
    */
   static async createUser(userData: {
     email: string;
+    nombre?: string;
     password?: string;
     google_id?: string;
     image?: string;
@@ -39,33 +40,44 @@ export class UsersService {
         hashedPassword = await bcrypt.hash(userData.password, 10);
       }
 
-      // Crear el usuario
+      // Crear el usuario en la tabla única
       const user = await UsersRepository.createUser({
-        ...userData,
-        password: hashedPassword
+        email: userData.email,
+        nombre: userData.nombre || userData.email.split('@')[0],
+        password_hash: hashedPassword,
+        google_id: userData.google_id,
+        foto_perfil: userData.image,
+        subscription_id: userData.role_id,
+        email_verificado: userData.email_verified_at ? 1 : 0
       });
 
       // No retornar la contraseña
-      const { password, ...userWithoutPassword } = user as any;
-      await sendTemplatedEmail({
-        to: user.email,
-        subject: 'Bienvenido a myApp',
-        contentText: [
-          'Tu cuenta ha sido creada exitosamente.',
-          '',
-          'Credenciales de acceso:',
-          `- Email: ${user.email}`,
-          `- Contraseña temporal: ${userData.password}`,
-          '',
-          'Te recomendamos cambiar tu contraseña después del primer inicio de sesión.',
-          '',
-          '{{ACTION_BUTTON}}',
-        ].join('\n'),
-        action: {
-          title: 'Iniciar sesión',
-          url: `${environment.baseUrl}/login`,
-        },
-      });
+      const { password_hash, ...userWithoutPassword } = user as any;
+      
+      try {
+        await sendTemplatedEmail({
+          to: user.email,
+          subject: 'Bienvenido a FinApp',
+          contentText: [
+            'Tu cuenta ha sido creada exitosamente en FinApp.',
+            '',
+            'Credenciales de acceso:',
+            `- Email: ${user.email}`,
+            `- Contraseña temporal: ${userData.password || 'Inicia sesión con Google'}`,
+            '',
+            'Te recomendamos cambiar tu contraseña después del primer inicio de sesión.',
+            '',
+            '{{ACTION_BUTTON}}',
+          ].join('\n'),
+          action: {
+            title: 'Iniciar sesión',
+            url: `${environment.baseUrl}/login`,
+          },
+        });
+      } catch (emailErr) {
+        console.error('Error al enviar correo de bienvenida:', emailErr);
+      }
+
       return {
         success: true,
         message: 'Usuario creado exitosamente',
@@ -112,7 +124,7 @@ export class UsersService {
         }
 
         // No retornar la contraseña
-        const { password, ...userWithoutPassword } = user as any;
+        const { password_hash, ...userWithoutPassword } = user as any;
 
         return {
           success: true,
@@ -161,7 +173,7 @@ export class UsersService {
    * Obtiene un usuario por email
    * @param email - Email del usuario
    * @returns Usuario encontrado
-   * @private Método usado internamente por getUserStats
+   * @private Método usado internamente
    */
   static async getUserByEmail(email: string) {
     try {
@@ -176,7 +188,7 @@ export class UsersService {
       }
 
       // No retornar la contraseña
-      const { password, ...userWithoutPassword } = user as any;
+      const { password_hash, ...userWithoutPassword } = user as any;
 
       return {
         success: true,
@@ -201,6 +213,7 @@ export class UsersService {
    */
   static async updateUser(userId: bigint, userData: {
     email?: string;
+    nombre?: string;
     password?: string;
     google_id?: string;
     image?: string;
@@ -230,20 +243,22 @@ export class UsersService {
         }
       }
 
-      // Hash de la contraseña si se proporciona
-      let hashedPassword = userData.password;
-      if (userData.password) {
-        hashedPassword = await bcrypt.hash(userData.password, 10);
+      const updateData: any = {};
+      if (userData.email) updateData.email = userData.email;
+      if (userData.nombre) updateData.nombre = userData.nombre;
+      if (userData.password) updateData.password_hash = await bcrypt.hash(userData.password, 10);
+      if (userData.google_id) updateData.google_id = userData.google_id;
+      if (userData.image) updateData.foto_perfil = userData.image;
+      if (userData.role_id) updateData.subscription_id = userData.role_id;
+      if (userData.email_verified_at !== undefined) {
+        updateData.email_verificado = userData.email_verified_at ? 1 : 0;
       }
 
       // Actualizar el usuario
-      const updatedUser = await UsersRepository.updateUser(userId, {
-        ...userData,
-        password: hashedPassword
-      });
+      const updatedUser = await UsersRepository.updateUser(userId, updateData);
 
       // No retornar la contraseña
-      const { password, ...userWithoutPassword } = updatedUser as any;
+      const { password_hash, ...userWithoutPassword } = updatedUser as any;
 
       return {
         success: true,
@@ -322,7 +337,6 @@ export class UsersService {
    * Obtiene estadísticas detalladas de un usuario
    * @param userId - ID del usuario
    * @returns Estadísticas del usuario
-   * @private Método usado internamente por getUserStats
    */
   static async getUserDetailedStats(userId: bigint) {
     try {
@@ -353,4 +367,3 @@ export class UsersService {
     }
   }
 }
-

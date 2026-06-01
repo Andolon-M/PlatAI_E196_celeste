@@ -7,7 +7,7 @@ export interface PassportUser {
   userId: string;
   email: string;
   google_id?: string;
-  image?: string;
+  foto_perfil?: string;
   accessToken?: string;
   refreshToken?: string;
 }
@@ -44,20 +44,20 @@ passport.use(new GoogleStrategy({
         }
       });
 
-      // Si el usuario existe, actualizamos google_id e image y pasamos tokens al controller
+      // Si el usuario existe, actualizamos google_id y foto_perfil y pasamos tokens al controller
       if (existingUser) {
         await prisma.users.update({
           where: { id: existingUser.id },
           data: {
             google_id: profile.id,
-            image: profile._json.picture || existingUser.image
+            foto_perfil: profile._json.picture || existingUser.foto_perfil
           }
         });
         const updatedUser: PassportUser = {
           userId: existingUser.id.toString(),
           email: existingUser.email,
           google_id: profile.id,
-          image: profile._json.picture || existingUser.image || undefined,
+          foto_perfil: profile._json.picture || existingUser.foto_perfil || undefined,
           accessToken,
           refreshToken: refreshToken || undefined
         };
@@ -69,7 +69,7 @@ passport.use(new GoogleStrategy({
         userId: "",
         email: profile._json.email || "",
         google_id: profile.id,
-        image: profile._json.picture,
+        foto_perfil: profile._json.picture,
         accessToken,
         refreshToken: refreshToken || undefined
       };
@@ -78,7 +78,7 @@ passport.use(new GoogleStrategy({
       return done(error as Error);
     }
   }
-));
+}));
 
 // Serialización del usuario para la sesión
 passport.serializeUser((user: any, done) => {
@@ -110,4 +110,4 @@ passport.deserializeUser(async (id: string, done) => {
   }
 });
 
-export default passport; 
+export default passport;

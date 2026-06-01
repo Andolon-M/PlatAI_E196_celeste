@@ -1,6 +1,6 @@
-import { prisma } from '../../../../config/database/db'
+import { prisma } from '../../../../config/database/db';
 import { Prisma } from '@prisma/client';
-import { User, UserFactory } from '../../domain/auth'
+import { User, UserFactory } from '../../domain/auth';
 
 export class AuthRepository {
     static async findUserByEmail(email: string): Promise<User | null> {
@@ -8,10 +8,7 @@ export class AuthRepository {
             const user = await prisma.users.findFirst({ 
                 where: { 
                     email,
-                    deleted_at: null
-                },
-                include: {
-                    user_profiles: true
+                    estado: 1 // 1 = activo
                 }
             });
             
@@ -25,10 +22,7 @@ export class AuthRepository {
     static async createUser(newUser: Prisma.usersCreateInput): Promise<User | Error> {
         try {
             const user = await prisma.users.create({ 
-                data: newUser,
-                include: {
-                    user_profiles: true
-                }
+                data: newUser
             });
             
             return UserFactory.fromPrisma(user);
@@ -48,9 +42,6 @@ export class AuthRepository {
             const user = await prisma.users.findUnique({
                 where: {
                     id: userId
-                },
-                include: {
-                    user_profiles: true
                 }
             });
             
@@ -74,11 +65,8 @@ export class AuthRepository {
                     id: userId
                 },
                 data: {
-                    password: hashedPassword,
-                    updated_at: new Date()
-                },
-                include: {
-                    user_profiles: true
+                    password_hash: hashedPassword,
+                    fecha_modificacion: new Date()
                 }
             });
             

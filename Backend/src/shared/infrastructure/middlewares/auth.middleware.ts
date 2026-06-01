@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { UserPermissionsRepository, UserPermission, UserRole } from '../repositories/user-permissions.repository';
+import { UserCapabilitiesRepository, UserCapability, UserSubscription } from '../repositories/user-capabilities.repository';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret_change_this';
 const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '24h';
@@ -11,11 +11,12 @@ declare global {
     interface User {
       userId: string;
       email: string;
-      role: {
+      subscription: {
         id: string;
         name: string;
+        price: number;
       } | null;
-      permissions: {
+      capabilities: {
         id: string;
         resource: string;
         action: string;
@@ -51,9 +52,9 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
 
     const decoded = jwt.verify(token, JWT_SECRET) as Express.User;
     
-    // Consultar el usuario completo con roles y permisos
-    const userWithPermissions = await UserPermissionsRepository.getUserWithPermissions(BigInt(decoded.userId));
-    if (!userWithPermissions) {
+    // Consultar el usuario completo con suscripción y capacidades
+    const userWithCapabilities = await UserCapabilitiesRepository.getUserWithCapabilities(BigInt(decoded.userId));
+    if (!userWithCapabilities) {
       return res.status(403).json({
         status: 403,
         message: 'Usuario no encontrado',
@@ -63,19 +64,20 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
       });
     }
 
-    // Construir el objeto de usuario con la información necesaria incluyendo permisos
+    // Construir el objeto de usuario con la información necesaria incluyendo capacidades
     const userResponse = {
-      userId: BigInt(userWithPermissions.id).toString(),
-      email: userWithPermissions.email,
-      role: userWithPermissions.role ? {
-        id: BigInt(userWithPermissions.role.id).toString(),
-        name: userWithPermissions.role.name
+      userId: BigInt(userWithCapabilities.id).toString(),
+      email: userWithCapabilities.email,
+      subscription: userWithCapabilities.subscription ? {
+        id: BigInt(userWithCapabilities.subscription.id).toString(),
+        name: userWithCapabilities.subscription.name,
+        price: Number(userWithCapabilities.subscription.price)
       } : null,
-      permissions: userWithPermissions.permissions.map(permission => ({
-        id: BigInt(permission.id).toString(),
-        resource: permission.resource,
-        action: permission.action,
-        type: permission.type
+      capabilities: userWithCapabilities.capabilities.map(capability => ({
+        id: BigInt(capability.id).toString(),
+        resource: capability.resource,
+        action: capability.action,
+        type: capability.type
       }))
     };
 
@@ -120,8 +122,8 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
 };
 
 /**
- * Middleware para verificar si un usuario tiene permisos para ejecutar una acción en un recurso
- * @param resource - Nombre del recurso (ej: 'users', 'roles', 'permissions')
+ * Middleware para verificar si un usuario tiene capacidades para ejecutar una acción en un recurso
+ * @param resource - Nombre del recurso (ej: 'users', 'cuentas')
  * @param action - Acción a realizar (ej: 'create', 'read', 'update', 'delete')
  * @returns Middleware function
  */
@@ -139,21 +141,21 @@ export const isAuthorized = (resource: string, action: string) => {
         });
       }
 
-      // Verificar si el usuario tiene el permiso específico
-      const hasPermission = req.user.permissions.some(permission => 
-        permission.resource === resource && 
-        permission.action === action && 
-        permission.type === 0
+      // Verificar si el usuario tiene la capacidad específica
+      const hasCapability = req.user.capabilities.some(capability => 
+        capability.resource === resource && 
+        capability.action === action && 
+        capability.type === 0
       );
 
-      if (!hasPermission) {
+      if (!hasCapability) {
         return res.status(403).json({
           status: 403,
           message: 'Acceso denegado',
           data: {
-            error: `No tienes permisos para ${action} ${resource}`,
-            required_permission: `${resource}.${action}`,
-            user_permissions: req.user.permissions.map(p => `${p.resource}.${p.action}`)
+            error: `No tienes capacidades para ${action} ${resource}`,
+            required_capability: `${resource}.${action}`,
+            user_capabilities: req.user.capabilities.map(c => `${c.resource}.${c.action}`)
           }
         });
       }
@@ -174,8 +176,8 @@ export const isAuthorized = (resource: string, action: string) => {
 };
 
 /**
- * Middleware para verificar si un usuario tiene un rol específico
- * @param roleName - Nombre del rol requerido
+ * Middleware para verificar si un usuario tiene una suscripción específica (para compatibilidad con rutas de roles)
+ * @param roleName - Nombre de la suscripción/rol requerido
  * @returns Middleware function
  */
 export const hasRole = (roleName: string) => {
@@ -192,18 +194,18 @@ export const hasRole = (roleName: string) => {
         });
       }
 
-      // Verificar si el usuario tiene el rol especificado
-      const hasRole = req.user.role && 
-        req.user.role.name === roleName;
+      // Verificar si el usuario tiene la suscripción especificada
+      const hasSubscription = req.user.subscription && 
+        req.user.subscription.name === roleName;
 
-      if (!hasRole) {
+      if (!hasSubscription) {
         return res.status(403).json({
           status: 403,
           message: 'Acceso denegado',
           data: {
-            error: `No tienes el rol '${roleName}'`,
-            required_role: roleName,
-            user_role: req.user.role?.name || 'Sin rol asignado'
+            error: `No tienes la suscripción '${roleName}'`,
+            required_subscription: roleName,
+            user_subscription: req.user.subscription?.name || 'Sin suscripción asignada'
           }
         });
       }

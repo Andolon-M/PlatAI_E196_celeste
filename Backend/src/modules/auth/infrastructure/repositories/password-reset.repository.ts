@@ -1,67 +1,65 @@
 import { prisma } from '../../../../config/database/db';
 
 /**
- * Repositorio para gestionar tokens de recuperación de contraseña
+ * Repositorio para gestionar tokens de recuperación de contraseña directamente en la tabla de usuarios
  */
 export class PasswordResetRepository {
   /**
-   * Guarda un token de recuperación de contraseña
-   * Si el usuario ya tiene un token, lo elimina y crea uno nuevo
+   * Guarda un token de recuperación de contraseña directamente en el usuario
    * @param userId - ID del usuario
    * @param token - Token generado
-   * @returns El token creado
+   * @returns El usuario actualizado
    */
   static async saveToken(userId: bigint, token: string) {
-    // Primero intentamos eliminar cualquier token existente del usuario
-    await prisma.password_reset_tokens.deleteMany({
-      where: {
-        user_id: userId
-      }
-    });
+    const expiry = new Date();
+    expiry.setHours(expiry.getHours() + 24); // Expira en 24 horas
 
-    // Luego creamos el nuevo token
-    return await prisma.password_reset_tokens.create({
+    return await prisma.users.update({
+      where: {
+        id: userId
+      },
       data: {
-        user_id: userId,
-        token,
-        created_at: new Date()
+        token_recuperacion: token,
+        token_expiracion: expiry,
+        fecha_modificacion: new Date()
       }
     });
   }
 
   /**
-   * Verifica si un token es válido y no ha sido usado
+   * Verifica si un token es válido y no ha expirado
    * @param token - Token a verificar
-   * @returns El registro del token con información del usuario si es válido, null en caso contrario
+   * @returns El registro del token adaptado para compatibilidad con el servicio
    */
   static async verifyToken(token: string) {
-    // Obtener el registro con el token especificado incluyendo información del usuario
-    const tokenRecord = await prisma.password_reset_tokens.findFirst({
+    const user = await prisma.users.findFirst({
       where: {
-        token
-      },
-      include: {
-        user: true
+        token_recuperacion: token
       }
     });
 
-    // Verificar si el token existe
-    if (!tokenRecord) {
+    // Verificar si el usuario existe
+    if (!user) {
       return null;
     }
 
-    // Verificar si el token ha expirado (24 horas)
-    const createdAt = new Date(tokenRecord.created_at || Date.now());
+    // Verificar si el token ha expirado
     const now = new Date();
-    const diffHours = Math.abs(now.getTime() - createdAt.getTime()) / 36e5; // Convertir ms a horas
-    
-    if (diffHours > 24) {
+    if (user.token_expiracion && user.token_expiracion < now) {
       // El token ha expirado, lo eliminamos
       await this.deleteToken(token);
       return null;
     }
 
-    return tokenRecord;
+    // Retorna estructura adaptada para compatibilidad con PasswordResetService
+    return {
+      token,
+      created_at: user.token_expiracion,
+      user: {
+        id: user.id,
+        email: user.email
+      }
+    };
   }
 
   /**
@@ -74,15 +72,19 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Elimina un token específico
+   * Elimina un token específico de recuperación limpiando los campos del usuario
    * @param token - Token a eliminar
-   * @returns Resultado de la eliminación
+   * @returns Resultado de la actualización
    */
   static async deleteToken(token: string) {
-    // Eliminamos directamente usando el token como criterio único
-    return await prisma.password_reset_tokens.delete({
+    return await prisma.users.updateMany({
       where: {
-        token: token
+        token_recuperacion: token
+      },
+      data: {
+        token_recuperacion: null,
+        token_expiracion: null,
+        fecha_modificacion: new Date()
       }
     });
   }
@@ -98,18 +100,22 @@ export class PasswordResetRepository {
   }
 
   /**
-   * Limpia tokens antiguos (mayores a 24 horas)
+   * Limpia tokens antiguos que han expirado
    */
   static async cleanupTokens() {
-    const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    const now = new Date();
     
-    return await prisma.password_reset_tokens.deleteMany({
+    return await prisma.users.updateMany({
       where: {
-        created_at: {
-          lt: oneDayAgo
+        token_expiracion: {
+          lt: now
         }
+      },
+      data: {
+        token_recuperacion: null,
+        token_expiracion: null,
+        fecha_modificacion: new Date()
       }
     });
   }
-} 
+}
