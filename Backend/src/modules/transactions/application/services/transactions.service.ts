@@ -1,7 +1,7 @@
 import { prisma } from '../../../../config/database/db';
 import { TransactionsRepository } from '../../infrastructure/repositories/transactions.repository';
-import { AccountsRepository } from '../../infrastructure/repositories/accounts.repository';
-import { CategoriesRepository } from '../../infrastructure/repositories/categories.repository';
+import { AccountsRepository } from '../../../accounts/infrastructure/repositories/accounts.repository';
+import { CategoriesRepository } from '../../../categories/infrastructure/repositories/categories.repository';
 import { TipoMovimiento, MetodoPago, TipoCategoria } from '@prisma/client';
 
 export class TransactionsService {
