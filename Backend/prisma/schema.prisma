@@ -152,6 +152,7 @@ model cuentas {
   movimientos        movimientos[]
   tr_origen          transferencias[] @relation("CuentaOrigen")
   tr_destino         transferencias[] @relation("CuentaDestino")
+  aportes_meta       aportes_meta[]
 
   @@index([id_usuario])
 }
@@ -254,15 +255,18 @@ model aportes_meta {
   id             BigInt       @id @default(autoincrement()) @db.UnsignedBigInt
   id_meta        BigInt       @db.UnsignedBigInt
   id_usuario     BigInt       @db.UnsignedBigInt
+  id_cuenta      BigInt       @db.UnsignedBigInt
   monto          Decimal      @db.Decimal(15, 2)
   nota           String?      @db.VarChar(255)
   fecha_aporte   DateTime     @db.Date
   fecha_creacion DateTime?    @default(now()) @db.Timestamp(0)
   meta           metas_ahorro @relation(fields: [id_meta], references: [id], onDelete: Cascade)
   usuario        users        @relation(fields: [id_usuario], references: [id], onDelete: Cascade)
+  cuenta         cuentas      @relation(fields: [id_cuenta], references: [id], onDelete: Cascade)
 
   @@index([id_meta])
   @@index([id_usuario])
+  @@index([id_cuenta])
 }
 
 enum TipoDeuda {
