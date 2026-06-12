@@ -127,4 +127,37 @@ export class AccountsController {
       });
     }
   }
+
+  /**
+   * Registra una transferencia de fondos entre dos cuentas
+   */
+  static async createTransfer(req: Request, res: Response) {
+    try {
+      const userId = BigInt(req.user!.userId);
+      const data = req.body;
+
+      const transferData = {
+        id_cuenta_origen: BigInt(data.id_cuenta_origen),
+        id_cuenta_destino: BigInt(data.id_cuenta_destino),
+        monto: Number(data.monto),
+        nota: data.nota,
+        fecha_transferencia: new Date(data.fecha_transferencia)
+      };
+
+      const result = await AccountsService.createTransfer(userId, transferData);
+
+      return res.status(201).json({
+        status: 201,
+        message: 'Transferencia realizada exitosamente',
+        data: serializeBigInt(result)
+      });
+    } catch (error) {
+      console.error('Error en createTransfer controller:', error);
+      return res.status(400).json({
+        status: 400,
+        message: 'Error al realizar la transferencia',
+        error: error instanceof Error ? error.message : 'Error desconocido'
+      });
+    }
+  }
 }

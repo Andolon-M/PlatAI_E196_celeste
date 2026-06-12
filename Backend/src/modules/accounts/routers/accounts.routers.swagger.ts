@@ -170,6 +170,47 @@
  *       responses:
  *         200:
  *           description: Cuenta archivada exitosamente
+ *
+ *   /accounts/transfer:
+ *     post:
+ *       summary: Registrar una transferencia entre cuentas del usuario
+ *       description: Registra la transferencia, descontando de la cuenta de origen e incrementando en la cuenta de destino (ambas deben pertenecer al usuario)
+ *       tags: [Cuentas]
+ *       security:
+ *         - bearerAuth: []
+ *       requestBody:
+ *         required: true
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required:
+ *                 - id_cuenta_origen
+ *                 - id_cuenta_destino
+ *                 - monto
+ *                 - fecha_transferencia
+ *               properties:
+ *                 id_cuenta_origen:
+ *                   type: string
+ *                   example: "1"
+ *                 id_cuenta_destino:
+ *                   type: string
+ *                   example: "2"
+ *                 monto:
+ *                   type: number
+ *                   example: 30000.00
+ *                 fecha_transferencia:
+ *                   type: string
+ *                   format: date
+ *                   example: "2026-06-01"
+ *                 nota:
+ *                   type: string
+ *                   example: "Pasar saldo a gastos diarios"
+ *       responses:
+ *         201:
+ *           description: Transferencia registrada exitosamente
+ *         400:
+ *           description: Datos inválidos o cuentas no pertenecen al usuario
  */
 
 export {};

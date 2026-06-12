@@ -81,4 +81,53 @@ export class AccountsValidator {
         })
     ];
   }
+
+  static createTransfer() {
+    return [
+      body('id_cuenta_origen')
+        .notEmpty()
+        .withMessage('La cuenta de origen es requerida')
+        .isNumeric()
+        .withMessage('El ID de la cuenta de origen debe ser numérico')
+        .custom((value) => {
+          if (isNaN(Number(value)) || Number(value) <= 0) {
+            throw new Error('El ID de la cuenta de origen debe ser positivo');
+          }
+          return true;
+        }),
+
+      body('id_cuenta_destino')
+        .notEmpty()
+        .withMessage('La cuenta de destino es requerida')
+        .isNumeric()
+        .withMessage('El ID de la cuenta de destino debe ser numérico')
+        .custom((value, { req }) => {
+          if (isNaN(Number(value)) || Number(value) <= 0) {
+            throw new Error('El ID de la cuenta de destino debe ser positivo');
+          }
+          if (Number(value) === Number(req.body.id_cuenta_origen)) {
+            throw new Error('La cuenta de origen y destino deben ser distintas');
+          }
+          return true;
+        }),
+
+      body('monto')
+        .notEmpty()
+        .withMessage('El monto es requerido')
+        .isFloat({ gt: 0 })
+        .withMessage('El monto a transferir debe ser un número positivo mayor que cero')
+        .toFloat(),
+
+      body('fecha_transferencia')
+        .notEmpty()
+        .withMessage('La fecha de transferencia es requerida')
+        .isISO8601()
+        .withMessage('La fecha debe ser un formato de fecha ISO 8601 válido')
+        .toDate(),
+
+      body('nota')
+        .optional()
+        .trim()
+    ];
+  }
 }

@@ -3,6 +3,7 @@ import { TransactionsRepository } from '../../infrastructure/repositories/transa
 import { AccountsRepository } from '../../../accounts/infrastructure/repositories/accounts.repository';
 import { CategoriesRepository } from '../../../categories/infrastructure/repositories/categories.repository';
 import { TipoMovimiento, MetodoPago, TipoCategoria } from '@prisma/client';
+import { AccountsService } from '../../../accounts/application/services/accounts.service';
 
 export class TransactionsService {
   /**
@@ -210,39 +211,7 @@ export class TransactionsService {
       fecha_transferencia: Date;
     }
   ) {
-    if (data.id_cuenta_origen === data.id_cuenta_destino) {
-      throw new Error('La cuenta de origen y destino deben ser diferentes');
-    }
-
-    if (data.monto <= 0) {
-      throw new Error('El monto de la transferencia debe ser mayor a cero');
-    }
-
-    // Validar cuentas
-    const [accountOrigen, accountDestino] = await Promise.all([
-      AccountsRepository.findById(data.id_cuenta_origen, userId),
-      AccountsRepository.findById(data.id_cuenta_destino, userId)
-    ]);
-
-    if (!accountOrigen || accountOrigen.estado !== 1) {
-      throw new Error('La cuenta de origen no existe o está archivada');
-    }
-
-    if (!accountDestino || accountDestino.estado !== 1) {
-      throw new Error('La cuenta de destino no existe o está archivada');
-    }
-
-    // Ejecutar transacción
-    return await prisma.$transaction(async (tx) => {
-      // 1. Descontar de cuenta origen
-      await AccountsRepository.updateBalance(data.id_cuenta_origen, -data.monto, tx);
-
-      // 2. Incrementar en cuenta destino
-      await AccountsRepository.updateBalance(data.id_cuenta_destino, data.monto, tx);
-
-      // 3. Crear registro de transferencia
-      return await TransactionsRepository.createTransfer(userId, data, tx);
-    });
+    return await AccountsService.createTransfer(userId, data);
   }
 
   /**

@@ -1,6 +1,8 @@
 import { AccountsRepository } from '../../infrastructure/repositories/accounts.repository';
 import { UserCapabilitiesRepository } from '../../../../shared/infrastructure/repositories/user-capabilities.repository';
 import { TipoCuenta } from '@prisma/client';
+import { prisma } from '../../../../config/database/db';
+import { TransactionsRepository } from '../../../transactions/infrastructure/repositories/transactions.repository';
 
 export class AccountsService {
   /**
@@ -80,5 +82,53 @@ export class AccountsService {
 
     await AccountsRepository.update(id, userId, data);
     return await AccountsRepository.findById(id, userId);
+  }
+
+  /**
+   * Registra una transferencia de fondos entre dos cuentas del usuario
+   */
+  static async createTransfer(
+    userId: bigint,
+    data: {
+      id_cuenta_origen: bigint;
+      id_cuenta_destino: bigint;
+      monto: number;
+      nota?: string;
+      fecha_transferencia: Date;
+    }
+  ) {
+    if (data.id_cuenta_origen === data.id_cuenta_destino) {
+      throw new Error('La cuenta de origen y destino deben ser diferentes');
+    }
+
+    if (data.monto <= 0) {
+      throw new Error('El monto de la transferencia debe ser mayor a cero');
+    }
+
+    // Validar cuentas y pertenencia
+    const [accountOrigen, accountDestino] = await Promise.all([
+      AccountsRepository.findById(data.id_cuenta_origen, userId),
+      AccountsRepository.findById(data.id_cuenta_destino, userId)
+    ]);
+
+    if (!accountOrigen || accountOrigen.id_usuario !== userId || accountOrigen.estado !== 1) {
+      throw new Error('La cuenta de origen no existe, está archivada o no te pertenece');
+    }
+
+    if (!accountDestino || accountDestino.id_usuario !== userId || accountDestino.estado !== 1) {
+      throw new Error('La cuenta de destino no existe, está archivada o no te pertenece');
+    }
+
+    // Ejecutar transacción
+    return await prisma.$transaction(async (tx) => {
+      // 1. Descontar de cuenta origen
+      await AccountsRepository.updateBalance(data.id_cuenta_origen, -data.monto, tx);
+
+      // 2. Incrementar en cuenta destino
+      await AccountsRepository.updateBalance(data.id_cuenta_destino, data.monto, tx);
+
+      // 3. Crear registro de transferencia
+      return await TransactionsRepository.createTransfer(userId, data, tx);
+    });
   }
 }

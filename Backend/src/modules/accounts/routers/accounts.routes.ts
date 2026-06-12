@@ -49,4 +49,13 @@ router.delete(
   AccountsController.deleteAccount
 );
 
+router.post(
+  '/transfer',
+  isAuthenticated,
+  isAuthorized('transferencias', 'create'),
+  AccountsValidator.createTransfer(),
+  validateRequest,
+  AccountsController.createTransfer
+);
+
 export default router;
