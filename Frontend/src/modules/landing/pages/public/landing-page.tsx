@@ -12,9 +12,9 @@ export function LandingPage() {
       <Navigation />
       <HeroSection />
       <MeetingsSection />
-      <AboutSection />
-      <ValuesSection />
-      <ContactSection />
+      {/* <AboutSection /> */}
+      {/* <ValuesSection /> */}
+      {/* <ContactSection /> */}
       <Footer />
     </main>
   )
