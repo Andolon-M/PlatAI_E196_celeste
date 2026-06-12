@@ -1,15 +1,12 @@
 import { Link, useLocation } from "react-router-dom"
 import { cn } from "@/shared/lib/utils"
 import {
-  Users,
-  UserCircle,
-  Calendar,
-  FileText,
-  DollarSign,
-  Settings,
   LayoutDashboard,
-  Shield,
-  MessageSquare,
+  Wallet,
+  ArrowRightLeft,
+  Tags,
+  Target,
+  Settings,
   X,
 } from "lucide-react"
 import { Button } from "@/shared/components/ui/button"
@@ -21,54 +18,24 @@ const menuItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Usuarios",
-    href: "/admin/users",
-    icon: Users,
+    title: "Cuentas",
+    href: "/admin/cuentas",
+    icon: Wallet,
   },
   {
-    title: "Miembros",
-    href: "/admin/members",
-    icon: UserCircle,
+    title: "Movimientos",
+    href: "/admin/movimientos",
+    icon: ArrowRightLeft,
   },
   {
     title: "Categorías",
-    href: "/admin/ministries",
-    icon: FileText,
+    href: "/admin/categorias",
+    icon: Tags,
   },
   {
-    title: "Objetivos",
-    href: "/admin/events",
-    icon: Calendar,
-  },
-  {
-    title: "Periodos",
-    href: "/admin/services",
-    icon: Calendar,
-  },
-  {
-    title: "Reportes Financieros",
-    href: "/admin/reports",
-    icon: DollarSign,
-  },
-  {
-    title: "Archivos",
-    href: "/admin/files",
-    icon: FileText,
-  },
-  {
-    title: "Roles y Permisos",
-    href: "/admin/roles",
-    icon: Shield,
-  },
-  {
-    title: "Plantillas WhatsApp",
-    href: "/admin/meta-templates",
-    icon: FileText,
-  },
-  {
-    title: "Mensajería Masiva",
-    href: "/admin/mass-messaging",
-    icon: MessageSquare,
+    title: "Metas de Ahorro",
+    href: "/admin/metas",
+    icon: Target,
   },
   {
     title: "Configuración",

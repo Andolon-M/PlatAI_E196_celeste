@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react"
-import { useSocketConnection, useSocketEvent } from "@/shared/hooks/use-socket"
+// WebSockets disabled temporarily
+// import { useSocketConnection, useSocketEvent } from "@/shared/hooks/use-socket"
 
 const STORAGE_KEY = "admin-notifications-v1"
 const MAX_NOTIFICATIONS = 100
@@ -116,9 +117,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const [notifications, setNotifications] = useState<NotificationEvent[]>(() => parseStoredNotifications())
   const [socketConnected, setSocketConnected] = useState(false)
 
-  useSocketConnection((connected) => {
-    setSocketConnected(connected)
-  })
+  // useSocketConnection((connected) => {
+  //   setSocketConnected(connected)
+  // })
 
   const addNotification = useCallback((notification: Omit<NotificationEvent, "id" | "createdAt" | "read">) => {
     setNotifications((current) => {
@@ -132,6 +133,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     })
   }, [])
 
+  /* WebSockets disabled
   useSocketEvent<MassMessageSocketPayload>("mass_message.queued", (payload) => {
     const notification = buildNotificationFromMassEvent("mass_message.queued", payload)
     if (notification) addNotification(notification)
@@ -156,6 +158,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     const notification = buildNotificationFromMassEvent("mass_message.completed", payload)
     if (notification) addNotification(notification)
   })
+  */
 
   const markAsRead = useCallback((id: string) => {
     setNotifications((current) => current.map((item) => (item.id === id ? { ...item, read: true } : item)))

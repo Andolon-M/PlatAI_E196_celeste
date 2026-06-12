@@ -3,6 +3,7 @@ import { LandingPage } from '@/modules/landing/pages/public/landing-page'
 import { AdminLayout } from '@/shared/layouts/admin-layout'
 import { AdminDashboard } from '@/modules/dashboard/pages/dashboard'
 import { UsersPage } from '@/modules/users/pages' 
+import { SavingsGoalsPage } from '@/modules/savings_goals/pages' 
 
 import {
   LoginPage,
@@ -40,6 +41,7 @@ export default function AppRouter() {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<UsersPage />} />
+        <Route path="metas" element={<SavingsGoalsPage />} />
         
       </Route>
 

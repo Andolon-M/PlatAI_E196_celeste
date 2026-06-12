@@ -29,6 +29,7 @@ export interface UserSubscription {
  */
 export interface UserWithCapabilities {
   id: bigint;
+  name: string;
   email: string;
   subscription: UserSubscription | null;
   capabilities: UserCapability[];
@@ -101,6 +102,7 @@ export class UserCapabilitiesRepository {
       where: { id: userId },
       select: {
         id: true,
+        nombre: true,
         email: true
       }
     });
@@ -117,6 +119,7 @@ export class UserCapabilitiesRepository {
 
     return {
       id: user.id,
+      name: user.nombre,
       email: user.email,
       subscription,
       capabilities

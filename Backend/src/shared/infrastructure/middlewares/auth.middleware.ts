@@ -11,6 +11,7 @@ declare global {
   namespace Express {
     interface User {
       userId: string;
+      name: string;
       email: string;
       subscription: {
         id: string;
@@ -80,6 +81,7 @@ export const isAuthenticated = async (req: Request, res: Response, next: NextFun
     // Construir el objeto de usuario con la información necesaria incluyendo capacidades
     const userResponse = {
       userId: BigInt(userWithCapabilities.id).toString(),
+      name: userWithCapabilities.name,
       email: userWithCapabilities.email,
       subscription: userWithCapabilities.subscription ? {
         id: BigInt(userWithCapabilities.subscription.id).toString(),

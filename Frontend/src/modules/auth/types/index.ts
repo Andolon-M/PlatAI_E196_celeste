@@ -25,11 +25,20 @@ export interface Role {
   name: string
 }
 
+export interface Subscription {
+  id: string
+  name: string
+  price?: number
+}
+
 export interface User {
   userId: string
+  name?: string
   email: string
-  role: Role
-  permissions: Permission[]
+  role?: Role
+  subscription?: Subscription
+  permissions?: Permission[]
+  capabilities?: any[]
 }
 
 export interface AuthResponse {
@@ -38,9 +47,12 @@ export interface AuthResponse {
 
 export interface AuthMeResponse {
   userId: string
+  name?: string
   email: string
-  role: Role
-  permissions: Permission[]
+  role?: Role
+  subscription?: Subscription
+  permissions?: Permission[]
+  capabilities?: any[]
 }
 
 export interface ForgotPasswordData {
