@@ -44,7 +44,10 @@ export function SavingsGoalCard({ meta, onPausar, onEliminar, onAportar, onVerDe
   const [alertaPausar, setAlertaPausar] = useState(false)
   const [alertaEliminar, setAlertaEliminar] = useState(false)
 
-  const progreso = meta.monto_objetivo > 0 ? (meta.ahorrado / meta.monto_objetivo) * 100 : 0
+  const ahorradoNum = Number(meta.ahorrado) || 0
+  const montoObjetivoNum = Number(meta.monto_objetivo) || 0
+  const progreso = montoObjetivoNum > 0 ? (ahorradoNum / montoObjetivoNum) * 100 : 0
+  
   const diasRestantes = Math.ceil(
     (new Date(meta.fecha_limite).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
   )
@@ -127,8 +130,8 @@ export function SavingsGoalCard({ meta, onPausar, onEliminar, onAportar, onVerDe
             </div>
             <Progress value={Math.min(progreso, 100)} className="h-3" />
             <div className="flex justify-between text-sm">
-              <span className="font-semibold">{formatCurrency(meta.ahorrado)}</span>
-              <span className="text-muted-foreground">{formatCurrency(meta.monto_objetivo)}</span>
+              <span className="font-semibold">{formatCurrency(ahorradoNum)}</span>
+              <span className="text-muted-foreground">{formatCurrency(montoObjetivoNum)}</span>
             </div>
           </div>
 

@@ -131,7 +131,7 @@ export function Footer() {
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Rol: <span className="font-medium">{user?.role.name}</span>
+                  Plan: <span className="font-medium">{user?.subscription?.name || user?.role?.name || "Básico"}</span>
                 </p>
               </div>
             ) : (

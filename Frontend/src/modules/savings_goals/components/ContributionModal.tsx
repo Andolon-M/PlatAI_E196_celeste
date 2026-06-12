@@ -101,7 +101,7 @@ export function ContributionModal({ meta, onOpenChange, onSave }: ContributionMo
               <SelectContent>
                 {cuentas.map(cuenta => (
                   <SelectItem key={cuenta.id} value={cuenta.id.toString()}>
-                    {cuenta.nombre_cuenta} - Saldo: ${cuenta.saldo_actual}
+                    {cuenta.nombre} - Saldo: ${cuenta.saldo}
                   </SelectItem>
                 ))}
               </SelectContent>

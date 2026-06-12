@@ -4,6 +4,9 @@ import { AdminLayout } from '@/shared/layouts/admin-layout'
 import { AdminDashboard } from '@/modules/dashboard/pages/dashboard'
 import { UsersPage } from '@/modules/users/pages' 
 import { SavingsGoalsPage } from '@/modules/savings_goals/pages' 
+import { AccountsPage } from '@/modules/accounts/pages'
+import { TransactionsPage } from '@/modules/transactions/pages'
+import { CategoriesPage } from '@/modules/categories/pages'
 
 import {
   LoginPage,
@@ -41,6 +44,9 @@ export default function AppRouter() {
       >
         <Route index element={<AdminDashboard />} />
         <Route path="users" element={<UsersPage />} />
+        <Route path="cuentas" element={<AccountsPage />} />
+        <Route path="movimientos" element={<TransactionsPage />} />
+        <Route path="categorias" element={<CategoriesPage />} />
         <Route path="metas" element={<SavingsGoalsPage />} />
         
       </Route>
