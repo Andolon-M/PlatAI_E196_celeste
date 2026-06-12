@@ -1,5 +1,6 @@
 import { CategoriesRepository } from '../../infrastructure/repositories/categories.repository';
 import { TipoCategoria } from '@prisma/client';
+import { prisma } from '../../../../config/database/db';
 
 export class CategoriesService {
   /**
@@ -88,6 +89,20 @@ export class CategoriesService {
     // Evitar que eliminen categorías globales
     if (category.id_usuario === null) {
       throw new Error('No se pueden eliminar las categorías globales del sistema');
+    }
+
+    // Verificar si la categoría tiene movimientos activos asociados
+    const activeMovements = await prisma.movimientos.count({
+      where: {
+        id_categoria: id,
+        eliminado: 0
+      }
+    });
+
+    if (activeMovements > 0) {
+      throw new Error(
+        `No se puede eliminar esta categoría porque tiene ${activeMovements} movimiento(s) activo(s) asociado(s). Reasigna o elimina esos movimientos primero.`
+      );
     }
 
     await CategoriesRepository.delete(id, userId);

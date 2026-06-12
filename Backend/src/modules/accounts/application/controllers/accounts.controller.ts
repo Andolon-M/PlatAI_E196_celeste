@@ -112,16 +112,19 @@ export class AccountsController {
       const userId = BigInt(req.user!.userId);
       const id = BigInt(req.params.id);
 
-      await AccountsService.updateAccount(id, userId, { estado: 0 });
+      const result = await AccountsService.deleteAccount(id, userId);
 
       return res.status(200).json({
         status: 200,
-        message: 'Cuenta archivada exitosamente'
+        message: result.message
       });
     } catch (error) {
       console.error('Error en deleteAccount controller:', error);
-      return res.status(error instanceof Error && error.message.includes('no encontrada') ? 404 : 400).json({
-        status: error instanceof Error && error.message.includes('no encontrada') ? 404 : 400,
+      const isNotFound = error instanceof Error && error.message.includes('no encontrada');
+      const isConflict = error instanceof Error && error.message.includes('registros asociados');
+      const statusCode = isNotFound ? 404 : isConflict ? 409 : 400;
+      return res.status(statusCode).json({
+        status: statusCode,
         message: 'Error al archivar la cuenta',
         error: error instanceof Error ? error.message : 'Error desconocido'
       });

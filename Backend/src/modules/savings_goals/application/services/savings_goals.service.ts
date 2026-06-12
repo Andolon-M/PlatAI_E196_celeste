@@ -92,12 +92,32 @@ export class SavingsGoalsService {
   }
 
   /**
-   * Elimina una meta de ahorro
+   * Elimina una meta de ahorro, devolviendo todos los aportes a sus cuentas de origen
    */
   static async deleteGoal(id: bigint, userId: bigint) {
-    await this.getGoalById(id, userId);
-    await SavingsGoalsRepository.deleteGoal(id, userId);
-    return { success: true, message: 'Meta de ahorro eliminada exitosamente' };
+    const goal = await this.getGoalById(id, userId);
+
+    // Obtener todos los aportes de la meta para revertirlos
+    const contributions = await SavingsGoalsRepository.findContributionsByGoalId(id, userId);
+
+    await prisma.$transaction(async (tx) => {
+      // Devolver cada aporte a su cuenta de origen
+      for (const contribution of contributions) {
+        const accountExists = await AccountsRepository.findById(contribution.id_cuenta, userId);
+        if (accountExists) {
+          await AccountsRepository.updateBalance(contribution.id_cuenta, Number(contribution.monto), tx);
+        }
+      }
+
+      // Eliminar la meta (cascade delete elimina los aportes)
+      await SavingsGoalsRepository.deleteGoal(id, userId);
+    });
+
+    const totalRefunded = contributions.reduce((sum, c) => sum + Number(c.monto), 0);
+    return {
+      success: true,
+      message: `Meta de ahorro eliminada exitosamente. Se devolvieron ${contributions.length} aporte(s) por un total de ${totalRefunded.toFixed(2)} a sus cuentas de origen.`
+    };
   }
 
   /**

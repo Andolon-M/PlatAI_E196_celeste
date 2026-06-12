@@ -85,6 +85,65 @@ export class AccountsService {
   }
 
   /**
+   * Archiva una cuenta, validando que no tenga datos financieros hijos activos
+   */
+  static async deleteAccount(id: bigint, userId: bigint) {
+    const account = await AccountsRepository.findById(id, userId);
+    if (!account) {
+      throw new Error('Cuenta no encontrada o no pertenece al usuario');
+    }
+
+    if (account.estado === 0) {
+      throw new Error('La cuenta ya se encuentra archivada');
+    }
+
+    // Verificar movimientos activos (no eliminados lógicamente)
+    const activeMovements = await prisma.movimientos.count({
+      where: {
+        id_cuenta: id,
+        eliminado: 0
+      }
+    });
+
+    // Verificar transferencias asociadas
+    const activeTransfers = await prisma.transferencias.count({
+      where: {
+        OR: [
+          { id_cuenta_origen: id },
+          { id_cuenta_destino: id }
+        ]
+      }
+    });
+
+    // Verificar aportes a metas de ahorro
+    const activeContributions = await prisma.aportes_meta.count({
+      where: {
+        id_cuenta: id
+      }
+    });
+
+    const issues: string[] = [];
+    if (activeMovements > 0) {
+      issues.push(`${activeMovements} movimiento(s) activo(s)`);
+    }
+    if (activeTransfers > 0) {
+      issues.push(`${activeTransfers} transferencia(s)`);
+    }
+    if (activeContributions > 0) {
+      issues.push(`${activeContributions} aporte(s) a metas de ahorro`);
+    }
+
+    if (issues.length > 0) {
+      throw new Error(
+        `No se puede archivar esta cuenta porque tiene registros asociados: ${issues.join(', ')}. Elimina o reasigna esos registros primero.`
+      );
+    }
+
+    await AccountsRepository.update(id, userId, { estado: 0 });
+    return { success: true, message: 'Cuenta archivada exitosamente' };
+  }
+
+  /**
    * Registra una transferencia de fondos entre dos cuentas del usuario
    */
   static async createTransfer(

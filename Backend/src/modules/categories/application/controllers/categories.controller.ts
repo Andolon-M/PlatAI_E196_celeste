@@ -127,7 +127,8 @@ export class CategoriesController {
       console.error('Error en deleteCategory controller:', error);
       const isForbidden = error instanceof Error && error.message.includes('sistema');
       const isNotFound = error instanceof Error && error.message.includes('no encontrada');
-      const statusCode = isForbidden ? 403 : isNotFound ? 404 : 400;
+      const isConflict = error instanceof Error && error.message.includes('movimiento(s) activo(s)');
+      const statusCode = isForbidden ? 403 : isNotFound ? 404 : isConflict ? 409 : 400;
 
       return res.status(statusCode).json({
         status: statusCode,
