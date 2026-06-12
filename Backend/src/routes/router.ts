@@ -5,6 +5,7 @@ import accountsRoutes from "../modules/accounts/routers/accounts.routes";
 import categoriesRoutes from "../modules/categories/routers/categories.routes";
 import transactionsRoutes from "../modules/transactions/routers/transactions.routes";
 import savingsGoalsRoutes from "../modules/savings_goals/routers/savings_goals.routes";
+import debtsRoutes from "../modules/debts/routers/debts.routes";
 
 const router = Router();
 
@@ -14,11 +15,12 @@ router.use("/auth", authRoutes);
 // Rutas de usuarios
 router.use("/users", usersRoutes);
 
-// Rutas Financieras: Cuentas, Categorías, Transacciones y Metas de Ahorro
+// Rutas Financieras: Cuentas, Categorías, Transacciones, Metas de Ahorro y Deudas
 router.use("/accounts", accountsRoutes);
 router.use("/categories", categoriesRoutes);
 router.use("/transactions", transactionsRoutes);
 router.use("/savings-goals", savingsGoalsRoutes);
+router.use("/debts", debtsRoutes);
 
 export default router;
  

@@ -287,7 +287,6 @@ model deudas_prestamos {
   tipo               TipoDeuda
   persona_entidad    String        @db.VarChar(150)
   monto_total        Decimal       @db.Decimal(15, 2)
-  monto_pendiente    Decimal       @db.Decimal(15, 2)
   descripcion        String?       @db.Text
   fecha_vencimiento  DateTime?     @db.Date
   estado             EstadoDeuda
