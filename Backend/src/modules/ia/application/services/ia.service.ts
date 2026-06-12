@@ -1,7 +1,7 @@
-import { TransactionsRepository } from '../../transactions/infrastructure/repositories/transactions.repository';
-import { CategoriesRepository } from '../../categories/infrastructure/repositories/categories.repository';
-import { DebtsRepository } from '../../debts/infrastructure/repositories/debts.repository';
-import { AccountsRepository } from '../../accounts/infrastructure/repositories/accounts.repository';
+import { TransactionsRepository } from '../../../transactions/infrastructure/repositories/transactions.repository';
+import { CategoriesRepository } from '../../../categories/infrastructure/repositories/categories.repository';
+import { DebtsRepository } from '../../../debts/infrastructure/repositories/debts.repository';
+import { AccountsRepository } from '../../../accounts/infrastructure/repositories/accounts.repository';
 import { TipoMovimiento, MetodoPago, TipoCategoria } from '@prisma/client';
 import { prisma } from '../../../../config/database/db';
 

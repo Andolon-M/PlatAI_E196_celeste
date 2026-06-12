@@ -43,7 +43,13 @@ export const isIaAuthenticated = async (req: Request, res: Response, next: NextF
     }
 
     // Inyectar el userId en el request para que lo usen los controladores
-    req.user = { userId: user.id.toString(), email: '', role: 'user' };
+    req.user = { 
+      userId: user.id.toString(), 
+      name: 'IA Agent', 
+      email: 'ia@system',
+      subscription: null,
+      capabilities: []
+    };
 
     next();
   } catch (error) {
