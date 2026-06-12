@@ -57,7 +57,6 @@ export class AuthController {
    */
   static async register(req: Request, res: Response) {
     try {
-      // Extraer todos los campos posibles del cuerpo de la solicitud
       const {
         email,
         password,
@@ -66,7 +65,8 @@ export class AuthController {
         image,
         name,
         last_name,
-        phone
+        phone,
+        celular
       } = req.body;
 
       const registerData = {
@@ -77,7 +77,8 @@ export class AuthController {
         ...(image && { image }),
         ...(name && { name }),
         ...(last_name && { last_name }),
-        ...(phone && { phone })
+        ...(phone && { phone }),
+        ...(celular && { celular })
       };
 
       const authResponse = await AuthService.register(registerData);

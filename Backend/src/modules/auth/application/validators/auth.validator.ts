@@ -51,6 +51,10 @@ export class AuthValidator {
         .optional()
         .isString()
         .withMessage('El apellido debe ser texto'),
+      body('celular')
+        .optional()
+        .isString()
+        .withMessage('El celular debe ser texto'),
       body('phone')
         .optional()
         .isString()

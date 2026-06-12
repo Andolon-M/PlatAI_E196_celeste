@@ -26,6 +26,7 @@ interface RegisterUserData {
   name?: string;
   last_name?: string;
   phone?: string;
+  celular?: string;
   autoGeneratePassword?: boolean;
 }
 
@@ -101,6 +102,7 @@ export class AuthService {
         password_hash: hashedPassword,
         foto_perfil: userData.image || null,
         google_id: userData.google_id || null,
+        celular: userData.celular || null,
         estado: 1,
         email_verificado: 0,
         subscription: defaultSub ? { connect: { id: defaultSub.id } } : undefined,

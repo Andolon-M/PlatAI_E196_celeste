@@ -19,6 +19,7 @@ export function RegisterPage() {
     email: "",
     password: "",
     confirmPassword: "",
+    celular: "",
   })
   
   const [showPassword, setShowPassword] = useState(false)
@@ -69,6 +70,7 @@ export function RegisterPage() {
         confirmPassword: formData.confirmPassword,
         firstName: formData.nombre,
         lastName: "",
+        celular: formData.celular,
         acceptTerms: true
       })
       
@@ -132,6 +134,19 @@ export function RegisterPage() {
                   placeholder="tu@correo.com"
                   value={formData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
+                  disabled={isLoading}
+                  className="h-11"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="celular">Celular (Opcional - Para uso de IA)</Label>
+                <Input
+                  id="celular"
+                  type="tel"
+                  placeholder="Ej: +573001234567"
+                  value={formData.celular}
+                  onChange={(e) => handleChange("celular", e.target.value)}
                   disabled={isLoading}
                   className="h-11"
                 />

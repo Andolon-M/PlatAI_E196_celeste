@@ -58,6 +58,7 @@ model users {
   moneda_preferida   String                @default("COP") @db.VarChar(10)
   estado             Int                   @default(1) @db.TinyInt // 1 = activo, 0 = inactivo
   email_verificado   Int                   @default(0) @db.TinyInt // 1 = verificado
+  celular            String?               @unique @db.VarChar(50)
   token_recuperacion String?               @db.VarChar(255)
   token_expiracion   DateTime?             @db.DateTime
   fecha_creacion     DateTime?             @default(now()) @db.Timestamp(0)

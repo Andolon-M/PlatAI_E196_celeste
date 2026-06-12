@@ -10,6 +10,7 @@ export interface RegisterData {
   confirmPassword: string
   firstName: string
   lastName: string
+  celular?: string
   acceptTerms: boolean
 }
 

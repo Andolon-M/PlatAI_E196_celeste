@@ -7,6 +7,7 @@ import transactionsRoutes from "../modules/transactions/routers/transactions.rou
 import savingsGoalsRoutes from "../modules/savings_goals/routers/savings_goals.routes";
 import debtsRoutes from "../modules/debts/routers/debts.routes";
 import dashboardRoutes from "../modules/dashboard/routers/dashboard.routes";
+import iaRoutes from "../modules/ia/routers/ia.routes";
 
 const router = Router();
 
@@ -25,6 +26,9 @@ router.use("/debts", debtsRoutes);
 
 // Dashboard
 router.use("/dashboard", dashboardRoutes);
+
+// Integración IA (n8n)
+router.use("/ia", iaRoutes);
 
 export default router;
  
